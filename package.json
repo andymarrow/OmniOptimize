@@ -5,10 +5,6 @@
 	"type": "module",
 	"scripts": {
 		"dev": "next dev",
-		"generate": "npx prisma generate && node post-generate.mjs",
-		"migrate": "npx prisma migrate dev && post-generate.mjs",
-		"reset": "npx prisma migrate reset && post-generate.mjs",
-		"build": "prisma generate && next build",
 		"start": "next start",
 		"lint": "next lint"
 	},
