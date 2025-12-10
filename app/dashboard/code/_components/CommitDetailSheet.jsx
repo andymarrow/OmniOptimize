@@ -64,11 +64,13 @@ const CommitDetailSheet = ({ isOpen, onClose, commit }) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-slate-50/50 dark:bg-[#020617] p-0 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800">
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto bg-slate-50/50 dark:bg-[#020617] p-0 backdrop-blur-xl border-l border-slate-200 dark:border-slate-800 focus:outline-none">
         
-        {/* --- HEADER --- */}
-        <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-5">
+        {/* --- HEADER (Sticky) --- */}
+        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-5">
             <div className="flex items-start justify-between gap-4">
+                
+                {/* Left: Metadata */}
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="font-mono text-[10px] bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500">
@@ -88,24 +90,39 @@ const CommitDetailSheet = ({ isOpen, onClose, commit }) => {
                     </SheetDescription>
                 </div>
 
-                {/* Score Dial */}
-                <div className="flex flex-col items-end">
-                    <div className="relative w-14 h-14 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90">
-                            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-200 dark:text-slate-800" />
-                            <circle 
-                                cx="28" cy="28" r="24" 
-                                stroke="currentColor" strokeWidth="4" 
-                                fill="transparent" 
-                                strokeDasharray={150} 
-                                strokeDashoffset={150 - (150 * (commit.riskScore / 100))} 
-                                className={healthColor}
-                                strokeLinecap="round" 
-                            />
-                        </svg>
-                        <span className={`absolute text-sm font-bold ${healthColor}`}>{commit.riskScore}</span>
+                {/* Right: Score & Close Button */}
+                <div className="flex items-start gap-4">
+                    
+                    {/* Risk Score */}
+                    <div className="flex flex-col items-center">
+                        <div className="relative w-12 h-12 flex items-center justify-center">
+                            <svg className="w-full h-full -rotate-90">
+                                <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-200 dark:text-slate-800" />
+                                <circle 
+                                    cx="24" cy="24" r="20" 
+                                    stroke="currentColor" strokeWidth="4" 
+                                    fill="transparent" 
+                                    strokeDasharray={125} 
+                                    strokeDashoffset={125 - (125 * (commit.riskScore / 100))} 
+                                    className={healthColor}
+                                    strokeLinecap="round" 
+                                />
+                            </svg>
+                            <span className={`absolute text-xs font-bold ${healthColor}`}>{commit.riskScore}</span>
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-1">Risk</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">Risk</span>
+
+                    {/* CLOSE BUTTON (Mobile Friendly) */}
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        onClick={() => onClose()}
+                    >
+                        <X className="w-4 h-4" />
+                    </Button>
+
                 </div>
             </div>
         </div>
