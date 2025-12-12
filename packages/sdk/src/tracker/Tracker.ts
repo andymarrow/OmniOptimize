@@ -6,9 +6,11 @@
  */
 
 import type { Event, BaseEvent, PageViewEvent, ClickEvent } from "../types";
+import type { ScreenClass } from "../types/events/snapshot";
 import { Config } from "../config/Config";
 import { SessionManager } from "../session/SessionManager";
 import { EventQueue } from "../queue/EventQueue";
+import { getScreenClass, computeLayoutHash } from "../utils/domSerializer";
 import {
   generateUUID,
   generateCSSSelector,
@@ -67,7 +69,7 @@ export class Tracker {
   }
 
   /**
-   * Track a click event
+   * Track a click event with optional heatmap data (normalized coordinates, screen class, layout hash)
    */
   trackClick(
     element: Element,
@@ -82,6 +84,20 @@ export class Tracker {
     const tagName = element.tagName.toLowerCase();
     const elementText = (element as HTMLElement).innerText?.substring(0, 100);
 
+    // Compute heatmap fields: normalized coordinates
+    const pageX = coordinates?.pageX ?? 0;
+    const pageY = coordinates?.pageY ?? 0;
+    const xNorm =
+      pageDimensions.w > 0 ? (pageX + window.scrollX) / pageDimensions.w : 0;
+    const yNorm =
+      pageDimensions.h > 0 ? (pageY + window.scrollY) / pageDimensions.h : 0;
+
+    // Get screen classification for responsive heatmap grouping
+    const screenClass: ScreenClass = getScreenClass(window.innerWidth);
+
+    // Compute layout hash for grouping similar DOM structures
+    const layoutHash = computeLayoutHash(document.body);
+
     const event: ClickEvent = {
       eventId: generateUUID(),
       projectId: this.config.getProjectId(),
@@ -95,12 +111,17 @@ export class Tracker {
       pageDimensions,
       viewport,
       properties: {},
-      pageX: coordinates?.pageX ?? 0,
-      pageY: coordinates?.pageY ?? 0,
+      pageX,
+      pageY,
       selector,
       xpath,
       tagName,
       elementTextHash: elementText ? this.hashText(elementText) : undefined,
+      // Heatmap fields
+      xNorm,
+      yNorm,
+      screenClass,
+      layoutHash,
     };
 
     this.track(event);

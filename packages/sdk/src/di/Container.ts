@@ -14,6 +14,7 @@ import { FetchTransmitter, BeaconTransmitter } from "../transmitter";
 import { PluginRegistry } from "../plugins/PluginRegistry";
 import { PageViewPlugin } from "../plugins/page-view/PageViewPlugin";
 import { ClickTrackingPlugin } from "../plugins/click-tracking/ClickTrackingPlugin";
+import { SessionSnapshotPlugin } from "../plugins/session-snapshot/SessionSnapshotPlugin";
 import type { ITransmitter } from "../transmitter/ITransmitter";
 import type { IPlugin } from "../types";
 
@@ -101,6 +102,7 @@ export class Container {
     if (enableAutoTracking) {
       this.pluginRegistry.register(new PageViewPlugin());
       this.pluginRegistry.register(new ClickTrackingPlugin());
+      this.pluginRegistry.register(new SessionSnapshotPlugin());
     }
 
     // Register custom plugins

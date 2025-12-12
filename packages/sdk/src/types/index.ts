@@ -19,3 +19,9 @@ export type {
   RouteEvent,
   CustomEvent,
 } from "./events/click";
+export type {
+  SessionSnapshotEvent,
+  SnapshotType,
+  ScreenClass,
+  MaskMetadata,
+} from "./events/snapshot";

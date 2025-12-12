@@ -8,3 +8,4 @@ export {
   ClickTrackingPlugin,
   type ClickTrackingOptions,
 } from "./click-tracking/ClickTrackingPlugin";
+export { SessionSnapshotPlugin } from "./session-snapshot/SessionSnapshotPlugin";

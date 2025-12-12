@@ -3,6 +3,7 @@
  */
 
 import { BaseEvent, Coordinates } from "../common";
+import type { ScreenClass } from "./snapshot";
 
 /**
  * Metadata about the clicked element
@@ -28,15 +29,20 @@ export interface ClickPayload extends Coordinates {
 
 /**
  * Click event - tracks user clicks with coordinates and element selectors for heatmaps
+ * Includes normalized coordinates and layout tracking for heatmap rendering
  */
 export interface ClickEvent extends BaseEvent {
   type: "click";
   pageX: number;
   pageY: number;
+  xNorm?: number; // Normalized X: (pageX + scrollX) / pageWidth (0-1)
+  yNorm?: number; // Normalized Y: (pageY + scrollY) / pageHeight (0-1)
+  screenClass?: ScreenClass; // Device class: 'mobile' | 'tablet' | 'desktop'
   selector: string;
   xpath?: string;
   elementTextHash?: string;
   tagName: string;
+  layoutHash?: string; // Hash of DOM layout at time of click (for snapshot alignment)
 }
 
 /**

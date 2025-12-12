@@ -39,7 +39,13 @@ export interface BaseEvent {
 /**
  * All supported event types
  */
-export type EventType = 'pageview' | 'click' | 'input' | 'route' | 'custom';
+export type EventType =
+  | "pageview"
+  | "click"
+  | "input"
+  | "route"
+  | "custom"
+  | "session_snapshot";
 
 /**
  * Union type for all possible events
