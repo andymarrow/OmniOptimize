@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import AnalysisDemoModal from "./AnalysisDemoModal";
+import Chatbot from "./Chatbot";
 
 const Hero = () => {
   const [url, setUrl] = useState("");
@@ -244,6 +245,7 @@ const Hero = () => {
         onClose={() => setShowModal(false)} 
         url={url} 
       />
+      <Chatbot />
     </section>
   );
 };
