@@ -47,7 +47,6 @@ const Chatbot = () => {
     <div className="fixed bottom-6 right-6 z-50">
       <div className="flex flex-col items-end">
 
-        {/* Chatbox */}
         <AnimatePresence>
           {open && (
             <motion.div
@@ -57,7 +56,6 @@ const Chatbot = () => {
               className="w-80 md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden mb-4"
             >
 
-              {/* Header */}
               <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <h2 className="font-semibold text-sm text-white">Assistant</h2>
                 <button
@@ -68,7 +66,6 @@ const Chatbot = () => {
                 </button>
               </div>
 
-              {/* Messages */}
               <div
                 ref={boxRef}
                 className="h-64 overflow-auto p-4 space-y-3 bg-white dark:bg-slate-900"
@@ -82,7 +79,7 @@ const Chatbot = () => {
                       className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${
                         m.from === "user"
                           ? "bg-brand-600 text-white"
-                          : "bg-brand-700 text-white"  // Bot text now white
+                          : "bg-brand-700 text-white"  
                       }`}
                     >
                       {m.text}
@@ -90,7 +87,6 @@ const Chatbot = () => {
                   </div>
                 ))}
 
-                {/* Typing Indicator */}
                 {loading && (
                   <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
                     <span className="animate-pulse">Assistant is typing...</span>
@@ -98,7 +94,6 @@ const Chatbot = () => {
                 )}
               </div>
 
-              {/* Input */}
               <form onSubmit={sendMessage} className="p-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
                 <div className="flex gap-2">
                   <input
@@ -120,13 +115,11 @@ const Chatbot = () => {
           )}
         </AnimatePresence>
 
-        {/* Chat Button with Custom Icon */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setOpen((s) => !s)}
           className="w-14 h-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-xl flex items-center justify-center"
         >
-          {/* Professional SVG chat icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="26"
