@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Check, ChevronsUpDown, PlusCircle, LayoutGrid, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useProject } from "@/app/_context/ProjectContext"; // Use the context
+import { useProject } from "@/app/_context/ProjectContext";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
@@ -20,10 +20,9 @@ export default function ProjectSwitcher({ className }) {
   const { projects, activeProject, setActiveProject, isLoading } = useProject();
   const createProject = useMutation(api.projects.create);
   
-  const [open, setOpen] = useState(false); // Popover state
-  const [showCreateModal, setShowCreateModal] = useState(false); // Modal state
+  const [open, setOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
-  // Form State
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectUrl, setNewProjectUrl] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -36,7 +35,6 @@ export default function ProjectSwitcher({ className }) {
         setShowCreateModal(false);
         setNewProjectName("");
         setNewProjectUrl("");
-        // The useQuery in context will auto-update the list!
     } catch (error) {
         console.error("Failed to create project", error);
     } finally {
@@ -53,27 +51,30 @@ export default function ProjectSwitcher({ className }) {
             role="combobox"
             aria-expanded={open}
             aria-label="Select a project"
-            className={cn("w-[200px] justify-between h-9 border-slate-200 dark:border-slate-800", className)}
+            className={cn(
+                "w-[200px] justify-between h-9 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800", // Fix Text & BG Color
+                className
+            )}
           >
             {isLoading ? (
                 <span className="text-xs text-slate-500">Loading...</span>
             ) : activeProject ? (
                 <div className="flex items-center gap-2 truncate">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="truncate">{activeProject.name}</span>
+                    <span className="truncate font-medium">{activeProject.name}</span>
                 </div>
             ) : (
-                <span className="text-slate-500">Select Project</span>
+                <span className="text-slate-500 dark:text-slate-400">Select Project</span>
             )}
-            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50 text-slate-500 dark:text-slate-400" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
-          <Command>
+          <Command className="bg-white dark:bg-slate-950">
             <CommandList>
-              <CommandInput placeholder="Search project..." />
-              <CommandEmpty>No project found.</CommandEmpty>
-              <CommandGroup heading="My Projects">
+              <CommandInput placeholder="Search project..." className="text-slate-900 dark:text-white placeholder:text-slate-500" />
+              <CommandEmpty className="py-2 text-center text-sm text-slate-500">No project found.</CommandEmpty>
+              <CommandGroup heading="My Projects" className="text-slate-500 dark:text-slate-400">
                 {projects?.map((project) => (
                   <CommandItem
                     key={project._id}
@@ -81,7 +82,7 @@ export default function ProjectSwitcher({ className }) {
                       setActiveProject(project);
                       setOpen(false);
                     }}
-                    className="text-sm cursor-pointer"
+                    className="text-sm cursor-pointer aria-selected:bg-slate-100 dark:aria-selected:bg-slate-900 text-slate-700 dark:text-slate-200"
                   >
                     <LayoutGrid className="mr-2 h-4 w-4 text-slate-500" />
                     {project.name}
@@ -95,11 +96,11 @@ export default function ProjectSwitcher({ className }) {
                 ))}
               </CommandGroup>
             </CommandList>
-            <CommandSeparator />
+            <CommandSeparator className="bg-slate-200 dark:bg-slate-800" />
             <CommandList>
               <CommandGroup>
                 <CommandItem 
-                    className="cursor-pointer"
+                    className="cursor-pointer aria-selected:bg-slate-100 dark:aria-selected:bg-slate-900 text-slate-700 dark:text-slate-200"
                     onSelect={() => {
                         setOpen(false);
                         setShowCreateModal(true);
@@ -116,33 +117,35 @@ export default function ProjectSwitcher({ className }) {
 
       {/* CREATE PROJECT MODAL */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
             <DialogHeader>
                 <DialogTitle>Create Project</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreate} className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                    <Label htmlFor="name">Project Name</Label>
+                    <Label htmlFor="name" className="text-slate-700 dark:text-slate-300">Project Name</Label>
                     <Input 
                         id="name" 
                         placeholder="My Awesome App" 
                         value={newProjectName}
                         onChange={(e) => setNewProjectName(e.target.value)}
+                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400"
                         required 
                     />
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="url">Website URL</Label>
+                    <Label htmlFor="url" className="text-slate-700 dark:text-slate-300">Website URL</Label>
                     <Input 
                         id="url" 
                         placeholder="https://example.com" 
                         value={newProjectUrl}
                         onChange={(e) => setNewProjectUrl(e.target.value)}
+                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400"
                         required 
                     />
                 </div>
                 <DialogFooter>
-                    <Button type="submit" disabled={isCreating}>
+                    <Button type="submit" disabled={isCreating} className="text-white dark:text-black bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200">
                         {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Create
                     </Button>

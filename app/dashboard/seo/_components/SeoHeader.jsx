@@ -48,19 +48,19 @@ const SeoHeader = ({
             {/* History Dropdown */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="shrink-0 border-slate-200 dark:border-slate-800">
-                        <History className="w-4 h-4 text-slate-500" />
+                    <Button variant="outline" size="icon" className="shrink-0 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <History className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[300px]">
+                <DropdownMenuContent align="start" className="w-[300px] bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800">
                     {scanHistory?.length > 0 ? (
                         scanHistory.map((scan) => (
                             <DropdownMenuItem 
                                 key={scan._id} 
                                 onClick={() => onSelectHistory(scan)}
-                                className="flex flex-col items-start gap-1 cursor-pointer"
+                                className="flex flex-col items-start gap-1 cursor-pointer focus:bg-slate-100 dark:focus:bg-slate-900"
                             >
-                                <span className="font-medium truncate w-full">{scan.url}</span>
+                                <span className="font-medium truncate w-full text-slate-900 dark:text-white">{scan.url}</span>
                                 <span className="text-xs text-slate-500">
                                     Last update: {scan.mobile?.updatedAt ? formatDistanceToNow(scan.mobile.updatedAt) + " ago" : "Unknown"}
                                 </span>
@@ -77,7 +77,7 @@ const SeoHeader = ({
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                     placeholder="https://your-website.com" 
-                    className="pl-9 bg-white dark:bg-slate-900"
+                    className="pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     disabled={isScanning}
@@ -88,7 +88,7 @@ const SeoHeader = ({
         <div className="flex items-center gap-2 shrink-0">
             <Button 
                 variant="outline" 
-                className="border-slate-200 dark:border-slate-800"
+                className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                 onClick={handleViewSite}
                 disabled={!url || isScanning}
             >
