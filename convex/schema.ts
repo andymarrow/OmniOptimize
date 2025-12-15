@@ -94,18 +94,57 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_project", ["projectId"]),
 
-  // 7. SEO SCANS
+  // 7. SEO SCANS (v3.0 - Robust)
   seo_scans: defineTable({
     projectId: v.id("projects"),
-    url: v.string(),
-    strategy: v.union(v.literal("mobile"), v.literal("desktop")),
-    scores: v.object({
-        performance: v.number(),
-        accessibility: v.number(),
-        seo: v.number(),
-        bestPractices: v.number(),
-    }),
-    coreWebVitals: v.any(),
-    createdAt: v.number(),
-  }).index("by_project", ["projectId"]),
+    url: v.string(), // The specific URL scanned (e.g., "youtube.com" or "wego.com/pricing")
+    
+    // Mobile Data
+    mobile: v.optional(v.object({
+        status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+        performanceScore: v.number(),
+        scores: v.optional(v.any()),
+        metrics: v.any(),
+        audits: v.any(),
+        
+        // 👇 CHANGED: Now storing ID, not raw data
+        filmstripId: v.optional(v.id("_storage")), 
+        
+        screenshotId: v.optional(v.id("_storage")),
+        fullJsonId: v.optional(v.id("_storage")),
+        updatedAt: v.number(),
+    })),
+
+    // Desktop Data (Same Change)
+    desktop: v.optional(v.object({
+        status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+        performanceScore: v.number(),
+        scores: v.optional(v.any()),
+        metrics: v.any(),
+        audits: v.any(),
+        
+        // 👇 CHANGED
+        filmstripId: v.optional(v.id("_storage")),
+        
+        screenshotId: v.optional(v.id("_storage")),
+        fullJsonId: v.optional(v.id("_storage")),
+        updatedAt: v.number(),
+    })),
+
+    // AI Analysis (Permanent Record)
+    aiAnalysis: v.optional(v.object({
+        summary: v.string(),
+        visuals: v.any(), // Chart data
+        roadmap: v.optional(v.any()),
+        // 👇 NEW: ML Prediction Storage
+        mlPrediction: v.optional(v.object({
+            category: v.string(), // "Good", "Poor"
+            confidence: v.number(),
+            timestamp: v.number()
+        })),
+        createdAt: v.number(),
+    })),
+  })
+  .index("by_project", ["projectId"])
+  .index("by_project_url", ["projectId", "url"]), // For the dropdown selector
 });

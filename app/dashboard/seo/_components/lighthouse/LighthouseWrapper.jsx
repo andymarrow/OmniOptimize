@@ -1,53 +1,53 @@
 "use client";
-import React, { useState } from "react";
-import { Smartphone, Monitor, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import React, { useState, useEffect } from "react";
+import { Smartphone, Monitor, AlertTriangle, Info, Image as ImageIcon } from "lucide-react";
+import { Accordion } from "@/components/ui/accordion";
 
 import { MetricCard } from "./MetricCard";
-import { OpportunityItem } from "./OpportunityItem";
-import { Filmstrip } from "./Filmstrip";
-import { DiagnosticItem } from "./DiagnosticItem";       // <--- NEW IMPORT
-import { AccessibilityAudit } from "./AccessibilityAudit"; // <--- NEW IMPORT
+import { AuditItem } from "./AuditItem"; 
+import { Filmstrip } from "./Filmstrip"; 
 import { ScoreGauge } from "./ScoreGuage";
 
-// --- MOCK DATA ---
-const REPORT_DATA = {
-  mobile: {
-    scores: { perf: 83, a11y: 85, best: 96, seo: 100 },
-    metrics: [
-      { label: "First Contentful Paint", value: "2.8 s", score: "average" },
-      { label: "Largest Contentful Paint", value: "4.7 s", score: "poor" },
-      { label: "Total Blocking Time", value: "120 ms", score: "average" },
-      { label: "Cumulative Layout Shift", value: "0.002", score: "good" },
-      { label: "Speed Index", value: "5.4 s", score: "poor" },
-      { label: "Time to Interactive", value: "5.1 s", score: "poor" },
-    ],
-    opportunities: [
-      { title: "Serve images in next-gen formats", url: "/assets/hero-banner.jpg", size: "1,200 KiB", savings: "1.5s" },
-      { title: "Defer offscreen images", url: "/images/carousel/slide-3.png", size: "450 KiB", savings: "0.8s" },
-      { title: "Reduce unused JavaScript", url: "vendors.js", size: "120 KiB", savings: "0.4s" },
-      { title: "Eliminate render-blocking resources", url: "styles.css", size: "40 KiB", savings: "0.15s" },
-    ]
-  },
-  desktop: {
-    scores: { perf: 98, a11y: 95, best: 100, seo: 100 },
-    metrics: [
-      { label: "First Contentful Paint", value: "0.4 s", score: "good" },
-      { label: "Largest Contentful Paint", value: "0.9 s", score: "good" },
-      { label: "Total Blocking Time", value: "10 ms", score: "good" },
-      { label: "Cumulative Layout Shift", value: "0", score: "good" },
-      { label: "Speed Index", value: "1.1 s", score: "good" },
-      { label: "Time to Interactive", value: "0.8 s", score: "good" },
-    ],
-    opportunities: [
-        { title: "Properly size images", url: "/assets/logo.png", size: "15 KiB", savings: "0.02s" },
-    ]
-  }
-};
-
-const LighthouseWrapper = () => {
+const LighthouseWrapper = ({ data }) => {
   const [device, setDevice] = useState("mobile");
-  const data = REPORT_DATA[device];
+  const [filmstripData, setFilmstripData] = useState([]);
+  
+  const currentData = device === 'mobile' ? data?.mobile : data?.desktop;
+  
+  // Fetch Filmstrip Data when URL changes
+  useEffect(() => {
+    if (currentData?.filmstripUrl) {
+        fetch(currentData.filmstripUrl)
+            .then(res => res.json())
+            .then(data => setFilmstripData(data))
+            .catch(err => console.error("Failed to load filmstrip", err));
+    } else {
+        setFilmstripData([]);
+    }
+  }, [currentData?.filmstripUrl]);
+
+  if (!currentData || !currentData.metrics) {
+    return (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+            <Info className="w-10 h-10 mb-4 opacity-50" />
+            <p>No data available for {device}. Run a scan to see results.</p>
+        </div>
+    );
+  }
+
+  const { performanceScore, scores, metrics, audits, screenshotUrl } = currentData;
+
+  // Separate audits into groups
+  const opportunities = audits.filter(a => a.group === 'opportunity');
+  const diagnostics = audits.filter(a => a.group === 'diagnostic');
+
+  const uiMetrics = [
+      { label: "First Contentful Paint", value: metrics.fcp, score: getScore(metrics.fcp), desc: "Marks the time at which the first text or image is painted." },
+      { label: "Largest Contentful Paint", value: metrics.lcp, score: getScore(metrics.lcp), desc: "Marks the time at which the largest text or image is painted." },
+      { label: "Total Blocking Time", value: metrics.tbt, score: getScore(metrics.tbt), desc: "Sum of all time periods between FCP and Time to Interactive." },
+      { label: "Cumulative Layout Shift", value: metrics.cls, score: getScore(metrics.cls, true), desc: "Measures the movement of visible elements within the viewport." },
+      { label: "Speed Index", value: metrics.si, score: getScore(metrics.si), desc: "How quickly the contents of a page are visibly populated." },
+  ];
 
   return (
     <div className="space-y-12 animate-in fade-in duration-500 pb-20">
@@ -70,121 +70,105 @@ const LighthouseWrapper = () => {
         </div>
       </div>
 
-      {/* 2. TOP LEVEL SCORES */}
+      {/* 2. THE 4 BIG SCORES */}
       <div className="flex flex-wrap justify-center gap-8 md:gap-16 pb-8 border-b border-slate-200 dark:border-slate-800">
-        <ScoreGauge score={data.scores.perf} label="Performance" />
-        <ScoreGauge score={data.scores.a11y} label="Accessibility" />
-        <ScoreGauge score={data.scores.best} label="Best Practices" />
-        <ScoreGauge score={data.scores.seo} label="SEO" />
+        <ScoreGauge score={performanceScore || 0} label="Performance" />
+        <ScoreGauge score={scores?.accessibility || 0} label="Accessibility" />
+        <ScoreGauge score={scores?.bestPractices || 0} label="Best Practices" />
+        <ScoreGauge score={scores?.seo || 0} label="SEO" />
       </div>
 
-      {/* 3. PERFORMANCE SECTION */}
-      <section>
-        <div className="flex flex-col items-center mb-8">
-            <ScoreGauge score={data.scores.perf} label="Performance" size="large" />
-            <p className="text-xs text-slate-400 mt-4">Values are estimated and may vary.</p>
-        </div>
-
-        {/* Core Web Vitals Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-t border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm rounded-lg overflow-hidden">
-            {data.metrics.map((m, i) => (
-                <MetricCard key={i} label={m.label} value={m.value} score={m.score} />
+      {/* 3. METRICS GRID & SCREENSHOT */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            {uiMetrics.map((m, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900">
+                    <MetricCard label={m.label} value={m.value} score={m.score} description={m.desc} />
+                </div>
             ))}
         </div>
-
-        {/* Filmstrip */}
-        <div className="mt-8">
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 px-2">Visual Progress</h4>
-            <Filmstrip />
-        </div>
-      </section>
-
-      {/* 4. OPPORTUNITIES (Accordion) */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-500" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Opportunities</h3>
-        </div>
         
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-1 divide-y divide-slate-100 dark:divide-slate-800">
-                {data.opportunities.map((opp, i) => (
-                    <OpportunityItem key={i} {...opp} />
-                ))}
-            </div>
-            <div className="p-4 bg-slate-50 dark:bg-slate-950/50 text-xs text-slate-500 text-right">
-                These suggestions can help your page load faster.
-            </div>
+        {/* Screenshot */}
+        <div className="bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col items-center justify-center gap-4">
+            {screenshotUrl ? (
+                <img 
+                    src={screenshotUrl} 
+                    alt="Site Screenshot" 
+                    className={`rounded shadow-lg border border-slate-200 dark:border-slate-700 ${device === 'mobile' ? 'max-h-[300px]' : 'w-full'}`} 
+                />
+            ) : (
+                <div className="text-center text-slate-400">
+                    <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <span className="text-xs">No Screenshot</span>
+                </div>
+            )}
+            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold">{device} Preview</span>
         </div>
       </section>
 
-      {/* 5. DIAGNOSTICS (Updated with Component) */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-2">
-            <Info className="w-5 h-5 text-slate-500" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Diagnostics</h3>
-        </div>
+      {/* 4. FILMSTRIP */}
+      {filmstripData.length > 0 && (
+        <section className="mt-8">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-4 px-2">Visual Loading Progress</h4>
+            <Filmstrip items={filmstripData} device={device} />
+        </section>
+      )}
+
+      {/* 5. OPPORTUNITIES & DIAGNOSTICS (ACCORDION) */}
+      <section className="space-y-8">
         
-        <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="diag-1" className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                <AccordionTrigger className="hover:no-underline px-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900/80">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        View 4 Diagnostics
-                    </span>
-                </AccordionTrigger>
-                <AccordionContent className="p-0">
-                    <div className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
-                        <DiagnosticItem 
-                            title="Minimize main-thread work" 
-                            description="Consider reducing the time spent parsing, compiling and executing JS. You may find delivering smaller JS payloads helps with this." 
-                        />
-                        <DiagnosticItem 
-                            title="Ensure text remains visible during webfont load" 
-                            description="Leverage the font-display CSS feature to ensure text is user-visible while webfonts are loading." 
-                        />
-                        <DiagnosticItem 
-                            title="Avoid chaining critical requests" 
-                            description="The critical request chains below show what resources are loaded with high priority." 
-                        />
-                        <DiagnosticItem 
-                            title="Keep request counts low and transfer sizes small" 
-                            description="To set budgets for the quantity and size of page resources, add a budget.json file." 
-                        />
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-      </section>
-
-      {/* 6. ACCESSIBILITY AUDIT (New Section) */}
-      <section>
-         <AccessibilityAudit />
-      </section>
-
-      {/* 7. PASSED AUDITS */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Passed Audits (12)</h3>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
-                {[
-                    "Properly size images", "Defer offscreen images", "Minify CSS", 
-                    "Minify JavaScript", "Enable text compression", "Preconnect to required origins",
-                    "Avoids enormous network payloads", "Uses passive listeners"
-                ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-500">
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                        {item}
-                    </div>
-                ))}
+        {/* Opportunities */}
+        {opportunities.length > 0 && (
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-red-500 rounded-full" />
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Opportunities</h3>
+                    <span className="text-sm text-slate-500">Suggestions to help your page load faster.</span>
+                </div>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                    <Accordion type="single" collapsible className="w-full">
+                        {opportunities.map((opp, i) => (
+                            <AuditItem key={i} audit={opp} />
+                        ))}
+                    </Accordion>
+                </div>
             </div>
-        </div>
+        )}
+
+        {/* Diagnostics */}
+        {diagnostics.length > 0 && (
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-yellow-500 rounded-full" />
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Diagnostics</h3>
+                    <span className="text-sm text-slate-500">More information about the performance of your application.</span>
+                </div>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                    <Accordion type="single" collapsible className="w-full">
+                        {diagnostics.map((diag, i) => (
+                            <AuditItem key={i} audit={diag} />
+                        ))}
+                    </Accordion>
+                </div>
+            </div>
+        )}
+
       </section>
 
     </div>
   );
 };
+
+// Helper to determine score color based on PSI logic
+function getScore(val, isCls = false) {
+    if(!val) return "average";
+    // Strip non-numeric chars (e.g., "0.8 s" -> 0.8)
+    const num = parseFloat(val.replace(/[^\d.-]/g, ''));
+    if(isNaN(num)) return "average";
+
+    if(isCls) return num <= 0.1 ? "good" : num <= 0.25 ? "average" : "poor";
+    // Rough estimate for paint times (LCP/FCP)
+    return num <= 2.5 ? "good" : num <= 4.0 ? "average" : "poor";
+}
 
 export default LighthouseWrapper;

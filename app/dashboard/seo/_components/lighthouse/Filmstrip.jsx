@@ -1,17 +1,33 @@
+"use client";
 import React from "react";
+import { cn } from "@/lib/utils";
 
-export const Filmstrip = () => {
+export const Filmstrip = ({ items, device }) => {
+  if (!items || items.length === 0) return null;
+
+  // Adjust dimensions based on device
+  const isMobile = device === 'mobile';
+  
   return (
-    <div className="py-6 px-2 overflow-x-auto">
+    <div className="py-6 px-2 overflow-x-auto scrollbar-hide">
         <div className="flex gap-4 min-w-max">
-            {[1,2,3,4,5,6,7,8].map((i) => (
-                <div key={i} className="w-20 h-36 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm p-1 flex flex-col gap-2">
-                    <div className="flex-1 bg-slate-100 dark:bg-slate-950 rounded overflow-hidden relative">
-                        {/* Simulation of page loading */}
-                        {i > 2 && <div className="absolute top-2 left-2 right-2 h-2 bg-slate-200 dark:bg-slate-800 rounded" />}
-                        {i > 3 && <div className="absolute top-6 left-2 right-2 h-16 bg-slate-200 dark:bg-slate-800 rounded" />}
-                        {i > 5 && <div className="absolute bottom-2 left-2 right-2 h-4 bg-blue-500/20 rounded" />}
+            {items.map((frame, i) => (
+                <div key={i} className="flex flex-col gap-2 group">
+                    <div 
+                        className={cn(
+                            "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded shadow-sm p-1 transition-transform group-hover:scale-105",
+                            isMobile ? "w-24 h-40" : "w-40 h-28" // Portrait vs Landscape
+                        )}
+                    >
+                        <img 
+                            src={frame.data} 
+                            alt={`Frame ${i}`} 
+                            className="w-full h-full object-contain bg-slate-100 dark:bg-slate-950 rounded"
+                        />
                     </div>
+                    <span className="text-[10px] text-center text-slate-500 font-mono group-hover:text-slate-900 dark:group-hover:text-white">
+                        {frame.timestamp}ms
+                    </span>
                 </div>
             ))}
         </div>

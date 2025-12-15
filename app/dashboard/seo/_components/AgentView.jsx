@@ -1,99 +1,111 @@
 "use client";
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Bot, Lightbulb, Target, TrendingUp } from "lucide-react";
+import React, { useState } from "react";
+import { useAction, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useProject } from "@/app/_context/ProjectContext";
+import { Button } from "@/components/ui/button";
+import { Loader2, Sparkles, LayoutDashboard } from "lucide-react";
+
+// Components
+import { AiSidebar } from "./agent/AiSidebar";
+import { PriorityMatrix } from "./agent/PriorityMatrix";
+import { TechDebtRadar } from "./agent/TechDebtRadar";
+import { ActionPlan } from "./agent/ActionPlan";
 
 const AgentView = () => {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left: The "Chat" / Agent Profile */}
-        <Card className="lg:col-span-1 border-brand-200 dark:border-brand-900 bg-brand-50/50 dark:bg-brand-900/10 shadow-sm">
-            <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-brand-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
-                        <Bot className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-slate-900 dark:text-white">Omni Agent</h3>
-                        <p className="text-xs text-slate-500 dark:text-brand-200">Deep Semantic Analysis</p>
-                    </div>
-                </div>
-                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
-                    "I've crawled your site simulating an LLM (like GPT-4). While your technical structure is decent, your **entity relationships** are weak. AI engines struggle to connect your 'Products' to your 'Pricing'."
-                </p>
-                <div className="space-y-2">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Agent Confidence</div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-500 w-[72%]" />
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500">
-                        <span>Low</span>
-                        <span>72/100</span>
-                        <span>High</span>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+  const { activeProject } = useProject();
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // 1. Fetch Latest Scan & Analysis
+  const scans = useQuery(api.seo.getScannedUrls, 
+    activeProject ? { projectId: activeProject._id } : "skip"
+  );
+  
+  const latestScan = scans && scans.length > 0 ? scans[0] : null;
+  const analysis = latestScan?.aiAnalysis;
 
-        {/* Right: The Detailed Report */}
-        <div className="lg:col-span-2 space-y-6">
-            
-            {/* Insight Card 1 */}
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-                <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 rounded-lg">
-                            <Lightbulb className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-900 dark:text-white mb-2">Content Gap Analysis</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
-                                Your competitors are ranking for <strong>"Best student laptop deals"</strong>, but your site only mentions "electronics". AI searches are specific; you need more long-tail content.
-                            </p>
-                            <div className="bg-slate-100 dark:bg-slate-900 p-3 rounded text-xs font-mono text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
-                                Suggestion: Add a blog post titled "Top 5 Laptops for Ethiopian Students in 2025"
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+  // 2. Generator Action
+  const generate = useAction(api.ai.generateInsights);
 
-            {/* Insight Card 2 */}
-            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-                <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
-                            <Target className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-900 dark:text-white mb-2">Schema Markup Strategy</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">
-                                I found product pages, but no <code className="text-pink-500 bg-pink-50 dark:bg-pink-900/20 px-1 rounded">Product</code> schema. This means Perplexity and Google cannot display your prices in rich results.
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+  const handleGenerate = async () => {
+    if (!latestScan) return;
+    setIsGenerating(true);
+    try {
+        await generate({ scanId: latestScan._id });
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setIsGenerating(false);
+    }
+  };
 
-             {/* Insight Card 3 */}
-             <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-                <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg">
-                            <TrendingUp className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-slate-900 dark:text-white mb-2">Sentiment Analysis</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                                Your "About Us" page has a highly positive sentiment score (0.9), but your "Refund Policy" is confusing (0.4 readability). Simplify the language to build trust.
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
+  if (!latestScan) {
+    return (
+        <div className="h-64 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+            <p>No scan data available. Run a Lighthouse scan first.</p>
         </div>
+    );
+  }
+
+  // Render Trigger Button
+  if (!analysis) {
+    return (
+        <div className="h-[500px] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div className="w-16 h-16 bg-brand-100 dark:bg-brand-900/20 rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="w-8 h-8 text-brand-600 dark:text-brand-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Unlock AI Insights</h3>
+            <p className="text-slate-500 max-w-md text-center mb-8">
+                Let Omni Agent analyze your performance metrics to generate a strategic priority matrix and actionable roadmap.
+            </p>
+            <Button 
+                size="lg" 
+                onClick={handleGenerate} 
+                disabled={isGenerating}
+                className="bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white shadow-lg"
+            >
+                {isGenerating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                {isGenerating ? "Analyzing..." : "Generate Strategic Report"}
+            </Button>
+        </div>
+    );
+  }
+
+  // --- THE NEW DASHBOARD LAYOUT ---
+  return (
+    <div className="animate-in fade-in-50 pb-20 space-y-8">
+        
+        {/* Top Row: Sidebar + Matrix + Radar */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            {/* Sidebar (3 Cols on XL) */}
+            <div className="xl:col-span-3 h-full min-h-[450px]">
+                <AiSidebar analysis={analysis} />
+            </div>
+
+            {/* Middle: Priority Matrix (6 Cols on XL) */}
+            <div className="xl:col-span-6 h-full min-h-[450px]">
+                <PriorityMatrix data={analysis.visuals.priorityMatrix} />
+            </div>
+
+            {/* Right: Radar Chart (3 Cols on XL) */}
+            <div className="xl:col-span-3 h-full min-h-[450px]">
+                <TechDebtRadar data={analysis.visuals.radarData} />
+            </div>
+        </div>
+
+        {/* Bottom Row: Roadmap */}
+        <div>
+            <div className="flex items-center gap-2 mb-4 px-1">
+                <LayoutDashboard className="w-5 h-5 text-brand-600" />
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-none">Execution Roadmap</h3>
+                    <p className="text-xs text-slate-500 mt-1">AI-recommended path to 90+ Score</p>
+                </div>
+            </div>
+            <ActionPlan roadmap={analysis.roadmap} />
+        </div>
+
     </div>
   );
 };
