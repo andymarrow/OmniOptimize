@@ -27,7 +27,7 @@
     "react-dom": ">=16.8.0"
   },
   "dependencies": {
-    "@omni-analytics/sdk": "^0.1.0"
+    "@omni-analytics/sdk": "workspace:*"
   },
   "keywords": [
     "react",
