@@ -17,14 +17,15 @@ import { ClickTrackingPlugin } from "../plugins/click-tracking/ClickTrackingPlug
 import { SessionSnapshotPlugin } from "../plugins/session-snapshot/SessionSnapshotPlugin";
 import type { ITransmitter } from "../transmitter/ITransmitter";
 import type { IPlugin } from "../types";
+import * as rrweb from "rrweb";
 
 /**
  * Container options for customization
  */
 export interface ContainerOptions {
   /**
-   * RrWeb instance (REQUIRED for SessionSnapshotPlugin)
-   * Import: import * as rrweb from 'rrweb'
+   * Optional: Custom RrWeb instance (auto-imported by default)
+   * If you need a specific rrweb version or configuration, pass it here
    */
   rrwebInstance?: any;
 
@@ -69,8 +70,8 @@ export class Container {
   private initialized = false;
 
   constructor(sdkConfig: SDKConfig, options?: ContainerOptions) {
-    // Store rrweb instance
-    this.rrwebInstance = options?.rrwebInstance;
+    // Use provided rrweb instance or auto-import (rrweb is now required)
+    this.rrwebInstance = options?.rrwebInstance || rrweb;
 
     // Initialize Config
     this.config = new Config(sdkConfig);
@@ -112,7 +113,7 @@ export class Container {
     if (enableAutoTracking) {
       this.pluginRegistry.register(new PageViewPlugin());
       this.pluginRegistry.register(new ClickTrackingPlugin());
-      
+
       // SessionSnapshotPlugin requires rrweb instance
       if (this.rrwebInstance) {
         this.pluginRegistry.register(

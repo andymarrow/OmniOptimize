@@ -142,9 +142,10 @@ export class RrwebManager {
       const rrwebOptions = this.buildRrwebOptions();
 
       // Start recording using the rrweb instance
+      // rrweb.record() requires an 'emit' function (not 'onRecord')
       this.rrwebStopFn = this.rrwebLib.record({
         ...rrwebOptions,
-        onRecord: (event: any) => {
+        emit: (event: any) => {
           if (this.shouldSampleEvent()) {
             this.handleRrwebEvent(event);
           }

@@ -37,9 +37,6 @@
   "author": "Dag",
   "license": "ISC",
   "packageManager": "pnpm@10.24.0",
-  "peerDependencies": {
-    "rrweb": "^2.0.0-alpha.18"
-  },
   "dependencies": {
     "rrweb": "^2.0.0-alpha.18"
   }
