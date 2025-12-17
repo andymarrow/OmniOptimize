@@ -3,6 +3,52 @@
  */
 
 /**
+ * Session configuration for inactivity tracking and lifecycle
+ */
+export interface SessionConfig {
+  /**
+   * Inactivity timeout in milliseconds (default: 1800000 = 30 minutes)
+   * When inactivity exceeds this duration, session rotates
+   */
+  inactivityTimeoutMs?: number;
+}
+
+/**
+ * Replay/rrweb configuration for session recording
+ */
+export interface ReplayConfig {
+  /**
+   * Enable/disable rrweb recording (default: false - must be explicitly enabled)
+   */
+  enabled?: boolean;
+
+  /**
+   * Sample rate for rrweb events (0-1, default: 1.0 = capture all)
+   */
+  sampleRate?: number;
+
+  /**
+   * CSS selectors to completely block/exclude from rrweb recording
+   */
+  blockSelectors?: string[];
+
+  /**
+   * CSS selectors to mask content in rrweb recording
+   */
+  maskSelectors?: string[];
+
+  /**
+   * Whether to mask all input values (default: true)
+   */
+  maskInputOptions?: Record<string, boolean>;
+
+  /**
+   * Enable debug logging for rrweb manager
+   */
+  debug?: boolean;
+}
+
+/**
  * Privacy and sanitization settings for snapshots
  */
 export interface PrivacyConfig {
@@ -115,6 +161,16 @@ export interface SDKConfig {
    * Optional: Enable automatic error reporting
    */
   captureErrors?: boolean;
+
+  /**
+   * Optional: Session configuration for inactivity timeout and lifecycle
+   */
+  session?: SessionConfig;
+
+  /**
+   * Optional: Replay/rrweb configuration for session recording
+   */
+  replay?: ReplayConfig;
 
   /**
    * Optional: Snapshot configuration for DOM capture, heatmaps, and session replay

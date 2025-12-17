@@ -76,9 +76,10 @@ export class Container {
     // Initialize Config
     this.config = new Config(sdkConfig);
 
-    // Initialize SessionManager
+    // Initialize SessionManager with inactivity timeout from config
     this.sessionManager = new SessionManager(
-      this.config.getSessionStorageKey()
+      this.config.getSessionStorageKey(),
+      this.config.getInactivityTimeoutMs()
     );
 
     // Setup Transmitters
