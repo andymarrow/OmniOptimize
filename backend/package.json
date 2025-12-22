@@ -1,8 +1,10 @@
 {
   "name": "backend",
   "scripts": {
+    "build": "bun build src/index.ts src/worker.ts --outdir=dist --target=bun --minify",
+    "start": "bun dist/index.js",
+    "start:worker": "bun dist/worker.js",
     "dev": "bun run --hot src/index.ts",
-    "worker": "bun run src/worker.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate"
   },

@@ -16,8 +16,14 @@ import { Button } from "@/components/ui/button";
 export function HeatmapPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const heatmapRef = useRef<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [urlInput, setUrlInput] = useState("");
   const [hoveredPoint, setHoveredPoint] = useState<any>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const { selectedProjectId, setSelectedUrl, selectedUrl } = useHeatmapStore();
   const {
@@ -33,6 +39,34 @@ export function HeatmapPage() {
     e.preventDefault();
     if (urlInput.trim()) {
       setSelectedUrl(urlInput.trim());
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setBackgroundImage(dataUrl);
+
+      // Get image dimensions
+      const img = new Image();
+      img.onload = () => {
+        setImageDimensions({ width: img.width, height: img.height });
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setBackgroundImage(null);
+    setImageDimensions(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -52,29 +86,45 @@ export function HeatmapPage() {
     // Get container dimensions
     const rect = containerRef.current.getBoundingClientRect();
     const containerWidth = rect.width || 800;
-    const containerHeight = 500;
+    const containerHeight = imageDimensions?.height
+      ? Math.round(
+          (containerWidth / imageDimensions.width) * imageDimensions.height
+        )
+      : 500;
 
-    // Create visual-heatmap instance with Gaussian blur
-    heatmapRef.current = Heatmap(containerRef.current, {
+    // Build heatmap config
+    const heatmapConfig: any = {
       size: 50, // Radius of data point in pixels
       max: Math.max(...heatmapData.grid.map((p) => p.count), 1),
       min: 0,
       intensity: 0.5,
       gradient: [
         { color: [49, 54, 149, 0.0], offset: 0 }, // transparent dark blue
-        { color: [49, 54, 149, 1.0], offset: 0.1 }, // dark blue
-        { color: [69, 117, 180, 1.0], offset: 0.2 }, // blue
-        { color: [116, 173, 209, 1.0], offset: 0.3 }, // light blue
-        { color: [171, 217, 233, 1.0], offset: 0.4 }, // lighter blue
-        { color: [224, 243, 248, 1.0], offset: 0.5 }, // very light blue
-        { color: [255, 255, 191, 1.0], offset: 0.6 }, // yellow
-        { color: [254, 224, 144, 1.0], offset: 0.7 }, // light orange
-        { color: [253, 174, 97, 1.0], offset: 0.8 }, // orange
-        { color: [244, 109, 67, 1.0], offset: 0.9 }, // red-orange
-        { color: [215, 48, 39, 1.0], offset: 0.95 }, // red
-        { color: [165, 0, 38, 1.0], offset: 1.0 }, // dark red
+        { color: [49, 54, 149, 0.7], offset: 0.1 }, // dark blue
+        { color: [69, 117, 180, 0.7], offset: 0.2 }, // blue
+        { color: [116, 173, 209, 0.7], offset: 0.3 }, // light blue
+        { color: [171, 217, 233, 0.7], offset: 0.4 }, // lighter blue
+        { color: [224, 243, 248, 0.7], offset: 0.5 }, // very light blue
+        { color: [255, 255, 191, 0.7], offset: 0.6 }, // yellow
+        { color: [254, 224, 144, 0.7], offset: 0.7 }, // light orange
+        { color: [253, 174, 97, 0.7], offset: 0.8 }, // orange
+        { color: [244, 109, 67, 0.7], offset: 0.9 }, // red-orange
+        { color: [215, 48, 39, 0.7], offset: 0.95 }, // red
+        { color: [165, 0, 38, 0.7], offset: 1.0 }, // dark red
       ],
-    });
+    };
+
+    // Add background image if uploaded
+    if (backgroundImage && imageDimensions) {
+      heatmapConfig.backgroundImage = {
+        url: backgroundImage,
+        width: containerWidth,
+        height: containerHeight,
+      };
+    }
+
+    // Create visual-heatmap instance with Gaussian blur
+    heatmapRef.current = Heatmap(containerRef.current, heatmapConfig);
 
     // Convert normalized coordinates to pixel coordinates
     const heatmapPoints = heatmapData.grid.map((point) => ({
@@ -92,7 +142,16 @@ export function HeatmapPage() {
       }
       heatmapRef.current = null;
     };
-  }, [heatmapData, selectedUrl]);
+  }, [heatmapData, selectedUrl, backgroundImage, imageDimensions]);
+
+  // Calculate container height based on image aspect ratio
+  const getContainerHeight = () => {
+    if (!imageDimensions) return "500px";
+    const containerWidth =
+      containerRef.current?.getBoundingClientRect().width || 800;
+    const aspectRatio = imageDimensions.height / imageDimensions.width;
+    return `${Math.round(containerWidth * aspectRatio)}px`;
+  };
 
   // Handle hover for detailed tooltips
   const handleContainerHover = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -144,6 +203,41 @@ export function HeatmapPage() {
               </form>
             </div>
 
+            {/* Image Upload */}
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                id="screenshot-upload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {backgroundImage ? "Change Screenshot" : "Upload Screenshot"}
+              </Button>
+              {backgroundImage && (
+                <>
+                  <span className="text-xs text-muted-foreground">
+                    {imageDimensions?.width} × {imageDimensions?.height}px
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    Remove
+                  </Button>
+                </>
+              )}
+            </div>
+
             {/* Data Source Notice */}
             {apiData ? (
               <div className="text-xs text-green-600 bg-green-50 p-2 rounded border border-green-200">
@@ -180,7 +274,12 @@ export function HeatmapPage() {
               <div className="rounded-lg border border-border overflow-hidden bg-white relative">
                 <div
                   ref={containerRef}
-                  style={{ height: "500px", width: "100%" }}
+                  style={{
+                    height: imageDimensions ? getContainerHeight() : "500px",
+                    width: "100%",
+                    minHeight: "300px",
+                    maxHeight: "800px",
+                  }}
                   onMouseMove={handleContainerHover}
                   onMouseLeave={() => setHoveredPoint(null)}
                 />
