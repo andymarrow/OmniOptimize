@@ -1,0 +1,12 @@
+{
+  "name": "example-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Example web app using Omni Analytics SDK",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@omni-analytics/sdk": "workspace:*"
+  }
+}

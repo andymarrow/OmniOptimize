@@ -1,0 +1,37 @@
+{
+  "name": "omni-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "pnpm -r --filter=@omni-analytics/sdk build && pnpm -r --filter=@omni-analytics/react build",
+    "test": "pnpm -r test",
+    "dev": "pnpm -r dev",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/node": "^24.10.1",
+    "crypto": "^1.0.1",
+    "echarts": "^6.0.0",
+    "rollup": "^4.53.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8",
+    "@types/react": "^19.2.7",
+    "husky": "^9.1.7",
+    "tslib": "^2.8.1"
+  }
+}

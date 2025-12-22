@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Store | Omni Analytics</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      font-size: 1.8em;
+    }
+
+    nav {
+      display: flex;
+      gap: 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+
+    nav a:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-indicator {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 4px 8px;
+      background: #27ae60;
+      border-radius: 3px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    section {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    section h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .product {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .product:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .product h3 {
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+
+    .product-price {
+      font-size: 1.5em;
+      color: #27ae60;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+
+    .event-log {
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 0.85em;
+      max-height: 300px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .event-item {
+      padding: 8px;
+      margin-bottom: 8px;
+      background: white;
+      border-left: 3px solid #3498db;
+      border-radius: 2px;
+    }
+
+    footer {
+      background: #2c3e50;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+
+    .highlight {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛒 TechStore</h1>
+    <nav>
+      <a href="#home" onclick="handleNavigation(event, '/', 'Home')">Home <span class="nav-indicator" id="home-tracked"></span></a>
+      <a href="#products" onclick="handleNavigation(event, '/products', 'Products')">Products <span class="nav-indicator" id="products-tracked"></span></a>
+      <a href="#contact" onclick="handleNavigation(event, '/contact', 'Contact')">Contact <span class="nav-indicator" id="contact-tracked"></span></a>
+      <a href="#cart" onclick="handleNavigation(event, '/cart', 'Cart')">Cart (0) <span class="nav-indicator" id="cart-tracked"></span></a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="highlight">
+      <strong>📊 Omni Analytics Active:</strong> This app automatically tracks all user interactions - no manual tracking code needed! 
+      Check the console or network tab to see events being sent.
+    </section>
+
+    <!-- Featured Products -->
+    <section id="products">
+      <h2>Featured Products</h2>
+      <div class="products">
+        <div class="product">
+          <h3>Laptop Pro</h3>
+          <p>High performance laptop</p>
+          <div class="product-price">$1,299</div>
+          <button onclick="alert('✅ Auto-tracked: Product clicked & added to cart')">Add to Cart</button>
+        </div>
+        <div class="product">
+          <h3>Wireless Mouse</h3>
+          <p>Ergonomic design</p>
+          <div class="product-price">$45</div>
+          <button onclick="alert('✅ Auto-tracked: Product clicked & added to cart')">Add to Cart</button>
+        </div>
+        <div class="product">
+          <h3>Mechanical Keyboard</h3>
+          <p>RGB Backlit</p>
+          <div class="product-price">$120</div>
+          <button onclick="alert('✅ Auto-tracked: Product clicked & added to cart')">Add to Cart</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section id="contact">
+      <h2>Contact Us</h2>
+      <form onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea rows="5" placeholder="Your message" required></textarea>
+        </div>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+
+    <!-- Event Log -->
+    <section>
+      <h2>📋 Event Log (Real-time)</h2>
+      <div class="event-log" id="eventLog">
+        <div class="event-item" style="color: #999;">Waiting for events...</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2024 TechStore with Omni Analytics</p>
+  </footer>
+
+  <!-- SDK Integration -->
+  <script type="module">
+    import { initializeSDK } from '/dist/index.esm.js';
+
+    // Initialize SDK - That's it! Just one line in real apps
+    const { tracker } = initializeSDK({
+      projectId: 'techstore-app',
+      endpoint: 'http://localhost:3000/api/events',
+      debug: true,
+      batchSize: 10,
+      batchTimeout: 5000,
+    });
+
+    console.log('✅ SDK Initialized! Auto-tracking is active.');
+    console.log('📊 Try:');
+    console.log('  1. Click the navigation links to see page navigation tracking');
+    console.log('  2. Click "Add to Cart" buttons to see click tracking');
+    console.log('  3. Fill and submit the contact form to see form tracking');
+    console.log('  4. Check the Event Log below to see all tracked events');
+
+    // Simple event logging for UI display
+    function logEvent(type, data) {
+      const eventLog = document.getElementById('eventLog');
+      const timestamp = new Date().toLocaleTimeString();
+      
+      if (eventLog.textContent.includes('Waiting for events')) {
+        eventLog.innerHTML = '';
+      }
+
+      const eventItem = document.createElement('div');
+      eventItem.className = 'event-item';
+      eventItem.innerHTML = `<strong>[${timestamp}]</strong> ${type}: ${JSON.stringify(data).substring(0, 80)}...`;
+      eventLog.insertBefore(eventItem, eventLog.firstChild);
+
+      while (eventLog.children.length > 20) {
+        eventLog.removeChild(eventLog.lastChild);
+      }
+    }
+
+    // Hook into tracker to display events
+    const originalTrack = tracker.track.bind(tracker);
+    tracker.track = function(event) {
+      logEvent(event.type.toUpperCase(), event);
+      return originalTrack(event);
+    };
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      alert('✅ Form submitted! Auto-tracked by SDK.');
+      event.target.reset();
+    }
+
+    // Handle navigation - this will trigger page view tracking
+    function handleNavigation(event, route, title) {
+      event.preventDefault();
+      
+      // Manually track page view to show navigation
+      tracker.trackPageView({
+        route: route,
+        title: title,
+        isInitialLoad: false
+      });
+
+      // Show indicator
+      document.querySelectorAll('.nav-indicator').forEach(el => el.textContent = '');
+      const indicator = event.target.querySelector('.nav-indicator');
+      if (indicator) {
+        indicator.textContent = '✓ TRACKED';
+        setTimeout(() => {
+          indicator.textContent = '';
+        }, 2000);
+      }
+
+      console.log(`📍 Navigation tracked: ${title} (${route})`);
+    }
+
+    // Set user ID when they navigate
+    tracker.setUserId('user-' + Math.random().toString(36).substr(2, 9));
+
+    window.handleSubmit = handleSubmit;
+    window.handleNavigation = handleNavigation;
+  </script>
+</body>
+</html>

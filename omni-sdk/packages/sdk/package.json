@@ -1,0 +1,43 @@
+{
+  "name": "@omni-analytics/sdk",
+  "version": "0.2.0",
+  "description": "A lightweight, extensible analytics SDK for tracking anonymous user data on websites. Self-hosted, privacy-first alternative to third-party analytics platforms.",
+  "type": "module",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.esm.js",
+  "browser": "./dist/index.umd.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js",
+      "browser": "./dist/index.umd.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c rollup.config.js",
+    "dev": "rollup -c rollup.config.js --watch"
+  },
+  "keywords": [
+    "analytics",
+    "tracking",
+    "sdk",
+    "omni",
+    "telemetry",
+    "event-tracking",
+    "user-analytics",
+    "privacy-first",
+    "self-hosted"
+  ],
+  "author": "Dag",
+  "license": "ISC",
+  "packageManager": "pnpm@10.24.0",
+  "dependencies": {
+    "rrweb": "^2.0.0-alpha.18"
+  }
+}
