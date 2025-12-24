@@ -2,6 +2,7 @@ import { db } from "../db/client";
 import { sessions, events, heatmapClicks } from "../db/schema";
 import { eq, count, min, max } from "drizzle-orm";
 import { eventRepository } from "./EventRepository";
+import { withErrorHandling } from "./BaseRepository";
 
 export class SessionRepository {
   /**
@@ -24,7 +25,7 @@ export class SessionRepository {
     location?: string;
     device?: string | null;
   }) {
-    try {
+    return withErrorHandling("SessionRepository.upsertSession", async () => {
       const existing = await db
         .select()
         .from(sessions)
@@ -66,17 +67,14 @@ export class SessionRepository {
 
         return result[0];
       }
-    } catch (error) {
-      console.error("Error upserting session:", error);
-      throw error;
-    }
+    });
   }
 
   /**
    * Get session by ID
    */
   async getSession(sessionId: string) {
-    try {
+    return withErrorHandling("SessionRepository.getSession", async () => {
       const result = await db
         .select()
         .from(sessions)
@@ -84,25 +82,22 @@ export class SessionRepository {
         .limit(1);
 
       return result[0] || null;
-    } catch (error) {
-      console.error("Error getting session:", error);
-      throw error;
-    }
+    });
   }
 
   /**
    * Get all sessions for a project
    */
   async getSessionsByProject(projectId: string) {
-    try {
-      return await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.projectId, projectId));
-    } catch (error) {
-      console.error("Error getting sessions by project:", error);
-      throw error;
-    }
+    return withErrorHandling(
+      "SessionRepository.getSessionsByProject",
+      async () => {
+        return await db
+          .select()
+          .from(sessions)
+          .where(eq(sessions.projectId, projectId));
+      }
+    );
   }
 
   /**
@@ -111,55 +106,56 @@ export class SessionRepository {
    * Rage clicks = per-user sequences of ≥5 clicks on same URL within 500ms windows
    */
   async getSessionsWithStats(projectId: string) {
-    try {
-      // Get all sessions for the project
-      const projectSessions = await db
-        .select()
-        .from(sessions)
-        .where(eq(sessions.projectId, projectId));
+    return withErrorHandling(
+      "SessionRepository.getSessionsWithStats",
+      async () => {
+        // Get all sessions for the project
+        const projectSessions = await db
+          .select()
+          .from(sessions)
+          .where(eq(sessions.projectId, projectId));
 
-      if (projectSessions.length === 0) {
-        return [];
-      }
-
-      // Get event counts per session (from generic events table)
-      const eventCounts = await db
-        .select({
-          sessionId: events.sessionId,
-          count: count(),
-        })
-        .from(events)
-        .where(eq(events.projectId, projectId))
-        .groupBy(events.sessionId);
-
-      const eventCountMap = new Map(
-        eventCounts.map((e) => [e.sessionId, e.count])
-      );
-
-      // Get rage click counts per session using window function analysis
-      const rageClickCounts = new Map<string, number>();
-
-      for (const session of projectSessions) {
-        const rageClickCount = await eventRepository.getRageClickCountBySession(
-          session.id,
-          3,
-          600 // ms threshold
-        );
-        if (rageClickCount > 0) {
-          rageClickCounts.set(session.id, rageClickCount);
+        if (projectSessions.length === 0) {
+          return [];
         }
-      }
 
-      // Enrich sessions with stats
-      return projectSessions.map((session) => ({
-        ...session,
-        eventsCount: eventCountMap.get(session.id) || 0,
-        rageClicks: rageClickCounts.get(session.id) || 0,
-      }));
-    } catch (error) {
-      console.error("Error getting sessions with stats:", error);
-      throw error;
-    }
+        // Get event counts per session (from generic events table)
+        const eventCounts = await db
+          .select({
+            sessionId: events.sessionId,
+            count: count(),
+          })
+          .from(events)
+          .where(eq(events.projectId, projectId))
+          .groupBy(events.sessionId);
+
+        const eventCountMap = new Map(
+          eventCounts.map((e) => [e.sessionId, e.count])
+        );
+
+        // Get rage click counts per session using window function analysis
+        const rageClickCounts = new Map<string, number>();
+
+        for (const session of projectSessions) {
+          const rageClickCount =
+            await eventRepository.getRageClickCountBySession(
+              session.id,
+              3,
+              600 // ms threshold
+            );
+          if (rageClickCount > 0) {
+            rageClickCounts.set(session.id, rageClickCount);
+          }
+        }
+
+        // Enrich sessions with stats
+        return projectSessions.map((session) => ({
+          ...session,
+          eventsCount: eventCountMap.get(session.id) || 0,
+          rageClicks: rageClickCounts.get(session.id) || 0,
+        }));
+      }
+    );
   }
 }
 

@@ -26,7 +26,7 @@ export type BaseEvent = {
   type: EventType;
   timestamp: number;
   url: string;
-  referrer: string;
+  referrer?: string;
   pageDimensions: Dimensions;
   viewport: Dimensions;
   properties?: Record<string, any>;
@@ -86,5 +86,21 @@ export type ClickEventData = {
   elementTextHash?: string;
   tagName: string;
   layoutHash?: string;
+  properties?: Record<string, any>;
+};
+
+export type PageViewEventData = {
+  type: "pageview";
+  eventId: string;
+  projectId: string;
+  sessionId: string;
+  clientId: string;
+  userId: string | null;
+  timestamp: number;
+  url: string;
+  referrer?: string;
+  pageDimensions: Dimensions;
+  viewport: Dimensions;
+  screenClass?: "mobile" | "tablet" | "desktop";
   properties?: Record<string, any>;
 };

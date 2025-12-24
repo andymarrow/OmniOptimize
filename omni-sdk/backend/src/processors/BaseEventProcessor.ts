@@ -1,0 +1,76 @@
+import { sessionRepository, eventRepository } from "../repositories";
+import type { Event } from "../types";
+
+/**
+ * Base event processor - handles common session/event tracking logic
+ * Eliminates repetition across all event processors
+ */
+
+export interface ProcessEventParams {
+  event: Event;
+  eventType: string;
+  location?: string;
+  device?: string;
+  screenClass?: string;
+}
+
+/**
+ * Process base event operations (session upsert + event tracking)
+ * Centralized logic to avoid repetition across processors
+ */
+export async function processBaseEvent({
+  event,
+  eventType,
+  location,
+  device,
+  screenClass,
+}: ProcessEventParams): Promise<void> {
+  // Normalize location (default to ET)
+  const normalizedLocation = location || "ET";
+
+  // Determine device: explicit device > screenClass > null
+  const normalizedDevice = device || screenClass || null;
+
+  // Upsert session once with all metadata
+  await sessionRepository.upsertSession({
+    sessionId: event.sessionId,
+    projectId: event.projectId,
+    clientId: event.clientId,
+    userId: event.userId || null,
+    location: normalizedLocation,
+    device: normalizedDevice,
+  });
+
+  // Track event in generic events table
+  await eventRepository.insertEvent({
+    eventId: event.eventId,
+    projectId: event.projectId,
+    sessionId: event.sessionId,
+    clientId: event.clientId,
+    userId: event.userId || null,
+    type: eventType,
+    timestamp: new Date(event.timestamp),
+    url: event.url,
+    referrer: event.referrer,
+  });
+}
+
+/**
+ * Helper to safely execute processor with consistent error handling
+ */
+export async function executeProcessor(
+  processorName: string,
+  eventId: string,
+  fn: () => Promise<void>
+): Promise<void> {
+  try {
+    await fn();
+    console.log(`[${processorName}] Processed event ${eventId}`);
+  } catch (error) {
+    console.error(
+      `[${processorName}] Error processing event ${eventId}:`,
+      error
+    );
+    throw error;
+  }
+}

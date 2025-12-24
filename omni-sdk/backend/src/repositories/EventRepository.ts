@@ -1,6 +1,7 @@
 import { db } from "../db/client";
 import { events } from "../db/schema";
 import { eq, count, inArray, sql } from "drizzle-orm";
+import { withErrorHandling, withIdempotency } from "./BaseRepository";
 
 export class EventRepository {
   /**
@@ -30,59 +31,44 @@ export class EventRepository {
     url: string;
     referrer?: string;
   }) {
-    try {
-      // Check if event already exists (idempotency)
-      const existing = await db
-        .select()
-        .from(events)
-        .where(eq(events.eventId, eventId))
-        .limit(1);
-
-      if (existing.length > 0) {
-        console.log(
-          `[EventRepository] Event ${eventId} already exists, skipping`
-        );
-        return existing[0];
-      }
-
-      // Insert new event
-      const result = await db
-        .insert(events)
-        .values({
-          eventId,
-          projectId,
-          sessionId,
-          clientId,
-          userId,
-          type,
-          timestamp,
-          url,
-          referrer: referrer || null,
-        })
-        .returning();
-
-      return result[0];
-    } catch (error) {
-      console.error("Error inserting event:", error);
-      throw error;
-    }
+    return withIdempotency(
+      "EventRepository.insertEvent",
+      eventId,
+      () =>
+        db.select().from(events).where(eq(events.eventId, eventId)).limit(1),
+      () =>
+        db
+          .insert(events)
+          .values({
+            eventId,
+            projectId,
+            sessionId,
+            clientId,
+            userId,
+            type,
+            timestamp,
+            url,
+            referrer: referrer || null,
+          })
+          .returning()
+    );
   }
 
   /**
    * Get event count for a session
    */
   async getEventCountBySession(sessionId: string): Promise<number> {
-    try {
-      const result = await db
-        .select({ count: count() })
-        .from(events)
-        .where(eq(events.sessionId, sessionId));
+    return withErrorHandling(
+      "EventRepository.getEventCountBySession",
+      async () => {
+        const result = await db
+          .select({ count: count() })
+          .from(events)
+          .where(eq(events.sessionId, sessionId));
 
-      return result[0]?.count || 0;
-    } catch (error) {
-      console.error("Error getting event count:", error);
-      throw error;
-    }
+        return result[0]?.count || 0;
+      }
+    );
   }
 
   /**
@@ -91,25 +77,25 @@ export class EventRepository {
   async getEventCountsBySessionIds(
     sessionIds: string[]
   ): Promise<Map<string, number>> {
-    try {
-      if (sessionIds.length === 0) {
-        return new Map();
+    return withErrorHandling(
+      "EventRepository.getEventCountsBySessionIds",
+      async () => {
+        if (sessionIds.length === 0) {
+          return new Map();
+        }
+
+        const result = await db
+          .select({
+            sessionId: events.sessionId,
+            count: count(),
+          })
+          .from(events)
+          .where(({ sessionId }) => inArray(sessionId, sessionIds))
+          .groupBy(events.sessionId);
+
+        return new Map(result.map((r) => [r.sessionId, r.count]));
       }
-
-      const result = await db
-        .select({
-          sessionId: events.sessionId,
-          count: count(),
-        })
-        .from(events)
-        .where(({ sessionId }) => inArray(sessionId, sessionIds))
-        .groupBy(events.sessionId);
-
-      return new Map(result.map((r) => [r.sessionId, r.count]));
-    } catch (error) {
-      console.error("Error getting event counts:", error);
-      throw error;
-    }
+    );
   }
 
   /**
@@ -126,9 +112,10 @@ export class EventRepository {
     minClicks: number = 5,
     thresholdMs: number = 500
   ): Promise<number> {
-    try {
-      // Raw SQL query using window functions to detect rage-click sequences
-      const result = await db.execute(sql`
+    return withErrorHandling(
+      "EventRepository.getRageClickCountBySession",
+      async () => {
+        const result = await db.execute(sql`
         WITH ordered_clicks AS (
           SELECT
             id,
@@ -173,12 +160,10 @@ export class EventRepository {
         SELECT COUNT(*) as rage_click_count FROM rage_sequences
       `);
 
-      const rageCount = result.rows[0]?.rage_click_count || 0;
-      return Number(rageCount);
-    } catch (error) {
-      console.error("Error detecting rage clicks:", error);
-      throw error;
-    }
+        const rageCount = result.rows[0]?.rage_click_count || 0;
+        return Number(rageCount);
+      }
+    );
   }
 
   /**
@@ -198,8 +183,10 @@ export class EventRepository {
       endedAt: Date;
     }>
   > {
-    try {
-      const result = await db.execute(sql`
+    return withErrorHandling(
+      "EventRepository.getRageClickSequencesBySession",
+      async () => {
+        const result = await db.execute(sql`
         WITH ordered_clicks AS (
           SELECT
             id,
@@ -248,17 +235,15 @@ export class EventRepository {
         ORDER BY started_at
       `);
 
-      return (result.rows || []).map((row: any) => ({
-        clientId: row.client_id,
-        url: row.url,
-        clickCount: row.click_count,
-        startedAt: new Date(row.started_at),
-        endedAt: new Date(row.ended_at),
-      }));
-    } catch (error) {
-      console.error("Error getting rage click sequences:", error);
-      throw error;
-    }
+        return (result.rows || []).map((row: any) => ({
+          clientId: row.client_id,
+          url: row.url,
+          clickCount: row.click_count,
+          startedAt: new Date(row.started_at),
+          endedAt: new Date(row.ended_at),
+        }));
+      }
+    );
   }
 }
 

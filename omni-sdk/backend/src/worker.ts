@@ -10,6 +10,7 @@ import type {
   Event,
   RrwebEventData,
   ClickEventData,
+  PageViewEventData,
 } from "./types";
 
 interface IncomingBatchWithLocation extends IncomingBatch {
@@ -120,7 +121,11 @@ async function routeEvent(event: Event, location?: string, device?: string) {
     case "click":
       return await processClickEvent(event as ClickEventData, location, device);
     case "pageview":
-      return await processPageViewEvent(event, location, device);
+      return await processPageViewEvent(
+        event as PageViewEventData,
+        location,
+        device
+      );
     case "input":
     case "route":
     case "custom":
