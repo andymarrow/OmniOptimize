@@ -72,7 +72,7 @@ def predict_seo(data: SeoData):
         # Get probabilities (confidence)
         probabilities = rf_model.predict_proba(df)[0]
         confidence = max(probabilities) * 100
-
+#return the result
         return {
             "category": prediction, # "Good", "Average", "Poor"
             "confidence": round(confidence, 2),
