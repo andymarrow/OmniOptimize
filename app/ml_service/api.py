@@ -38,6 +38,7 @@ class SeoData(BaseModel):
     ttfb_lab: float
     form_factor: str # 'mobile' or 'desktop'
 
+# to call the predict based on the information ge from optimizer 
 @app.post("/predict")
 def predict_seo(data: SeoData):
     try:
