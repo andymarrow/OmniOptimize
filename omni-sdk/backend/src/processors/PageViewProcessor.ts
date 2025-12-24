@@ -1,13 +1,43 @@
+import { sessionRepository, eventRepository } from "../repositories";
 import type { Event } from "../types";
 
 /**
  * Process page view events
- * Currently no-op - may store in future
+ * - Upsert session with location and device
+ * - Track event in events table
  */
-export async function processPageViewEvent(event: Event) {
+export async function processPageViewEvent(
+  event: Event,
+  location?: string,
+  device?: string
+) {
   try {
-    console.log(`[PageViewProcessor] Received pageview event ${event.eventId}`);
-    // TODO: Store page view analytics if needed
+    // Ensure session exists with location and device
+    await sessionRepository.upsertSession({
+      sessionId: event.sessionId,
+      projectId: event.projectId,
+      clientId: event.clientId,
+      userId: event.userId || null,
+      location: location || "ET",
+      device: device || null,
+    });
+
+    // Track event in generic events table
+    await eventRepository.insertEvent({
+      eventId: event.eventId,
+      projectId: event.projectId,
+      sessionId: event.sessionId,
+      clientId: event.clientId,
+      userId: event.userId || null,
+      type: "pageview",
+      timestamp: new Date(event.timestamp),
+      url: event.url,
+      referrer: event.referrer,
+    });
+
+    console.log(
+      `[PageViewProcessor] Processed pageview event ${event.eventId}`
+    );
   } catch (error) {
     console.error(
       `[PageViewProcessor] Error processing event ${event.eventId}:`,

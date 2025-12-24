@@ -7,6 +7,7 @@ import {
   healthHandler,
   getSessionHandler,
   getReplayHandler,
+  getProjectSessionsHandler,
   getHeatmapHandler,
   listHeatmapsHandler,
 } from "./routes";
@@ -88,6 +89,7 @@ app.get("/", (c) => {
       ingest: "POST /ingest",
       sessions: "GET /sessions/:sessionId",
       replays: "GET /replays/:replayId",
+      projectSessions: "GET /projects/:projectId/sessions",
       heatmaps: "GET /heatmaps/:projectId/:url",
     },
   });
@@ -96,6 +98,7 @@ app.get("/", (c) => {
 // Session Replay Routes
 app.get("/sessions/:sessionId", getSessionHandler);
 app.get("/replays/:replayId", getReplayHandler);
+app.get("/projects/:projectId/sessions", getProjectSessionsHandler);
 
 // Heatmap Routes
 app.get("/heatmaps/:projectId/:url", getHeatmapHandler);

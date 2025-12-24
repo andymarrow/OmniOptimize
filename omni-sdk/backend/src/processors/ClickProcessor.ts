@@ -1,21 +1,44 @@
-import { sessionRepository } from "../repositories";
-import { heatmapRepository } from "../repositories";
+import {
+  sessionRepository,
+  heatmapRepository,
+  eventRepository,
+} from "../repositories";
 import type { ClickEventData } from "../types";
 
 /**
  * Process click events
- * - Upsert session
+ * - Upsert session with location and device
+ * - Track event in events table
  * - Aggregate clicks into heatmap grid
  * - Increment bucket counter
  */
-export async function processClickEvent(event: ClickEventData) {
+export async function processClickEvent(
+  event: ClickEventData,
+  location?: string,
+  device?: string
+) {
   try {
-    // Ensure session exists
+    // Ensure session exists with location and device
     await sessionRepository.upsertSession({
       sessionId: event.sessionId,
       projectId: event.projectId,
       clientId: event.clientId,
       userId: event.userId || null,
+      location: location || "ET",
+      device: device || event.screenClass || null,
+    });
+
+    // Track event in generic events table
+    await eventRepository.insertEvent({
+      eventId: event.eventId,
+      projectId: event.projectId,
+      sessionId: event.sessionId,
+      clientId: event.clientId,
+      userId: event.userId || null,
+      type: "click",
+      timestamp: new Date(event.timestamp),
+      url: event.url,
+      referrer: event.referrer,
     });
 
     // Record click in heatmap

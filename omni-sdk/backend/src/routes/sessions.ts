@@ -40,6 +40,8 @@ export async function getSessionHandler(c: Context) {
         projectId: session.projectId,
         clientId: session.clientId,
         userId: session.userId,
+        location: session.location,
+        device: session.device,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
       },
@@ -113,6 +115,59 @@ export async function getReplayHandler(c: Context) {
     });
   } catch (error) {
     console.error("[GetReplay] Error:", error);
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      500
+    );
+  }
+}
+
+/**
+ * GET /projects/:projectId/sessions
+ * Fetch all sessions for a project with aggregated stats
+ */
+export async function getProjectSessionsHandler(c: Context) {
+  try {
+    const projectId = c.req.param("projectId");
+
+    if (!projectId) {
+      return c.json({ error: "projectId is required" }, 400);
+    }
+
+    // Get all sessions with stats
+    const sessions = await sessionRepository.getSessionsWithStats(projectId);
+
+    // Format response
+    const formattedSessions = sessions.map((session) => {
+      const duration =
+        session.updatedAt.getTime() - session.createdAt.getTime();
+      const startedAt = session.createdAt.getTime();
+
+      return {
+        id: session.id,
+        clientId: session.clientId,
+        userId: session.userId,
+        location: session.location,
+        device: session.device,
+        duration, // milliseconds
+        startedAt, // Unix timestamp
+        endedAt: session.updatedAt.getTime(), // Unix timestamp
+        eventsCount: session.eventsCount,
+        rageClicks: session.rageClicks,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+      };
+    });
+
+    return c.json({
+      projectId,
+      sessionCount: formattedSessions.length,
+      sessions: formattedSessions,
+    });
+  } catch (error) {
+    console.error("[GetProjectSessions] Error:", error);
     return c.json(
       {
         error: error instanceof Error ? error.message : "Internal server error",

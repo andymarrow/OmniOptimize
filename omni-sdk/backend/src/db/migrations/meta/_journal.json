@@ -8,6 +8,13 @@
       "when": 1766258312429,
       "tag": "20251220191832_narrow_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766576264034,
+      "tag": "20251224113743_absurd_pretty_boy",
+      "breakpoints": true
     }
   ]
 }

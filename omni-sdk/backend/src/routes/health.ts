@@ -10,6 +10,7 @@ import { checkDbConnection } from "../db/client";
 export async function healthHandler(c: Context, queue: Queue<IncomingBatch>) {
   try {
     const dbOk = await checkDbConnection();
+    console.log(c.req.header("x-forwarded-for"));
 
     // Get queue health from existing queue instance
     let queueHealth = null;

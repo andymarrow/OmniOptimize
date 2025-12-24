@@ -17,10 +17,33 @@ export const sessions = pgTable("sessions", {
   projectId: text("project_id").notNull(),
   clientId: text("client_id").notNull(),
   userId: text("user_id"),
+  location: text("location").default("ET").notNull(), // ISO 2-letter country code
+  device: text("device"), // 'mobile' | 'tablet' | 'desktop'
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * Events table - tracks all event types (rrweb, click, pageview, input, route, custom)
+ * Generic event store for accurate event counting across all event sources
+ * Note: Detailed event data is stored in specialized tables (rrwebEvents, heatmapClicks)
+ */
+export const events = pgTable("events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventId: text("event_id").notNull().unique(), // from SDK (dedup key)
+  projectId: text("project_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  clientId: text("client_id").notNull(),
+  userId: text("user_id"),
+  type: text("type").notNull(), // 'rrweb', 'click', 'pageview', 'input', 'route', 'custom', 'session_snapshot'
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+  url: text("url").notNull(),
+  referrer: text("referrer"),
+  createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
@@ -92,8 +115,16 @@ export const heatmapClicks = pgTable("heatmap_clicks", {
 
 // Relations (optional, not used in this phase but good for type safety)
 export const sessionsRelations = relations(sessions, ({ many }) => ({
+  events: many(events),
   rrwebEvents: many(rrwebEvents),
   heatmapClicks: many(heatmapClicks),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  session: one(sessions, {
+    fields: [events.sessionId],
+    references: [sessions.id],
+  }),
 }));
 
 export const rrwebEventsRelations = relations(rrwebEvents, ({ one }) => ({

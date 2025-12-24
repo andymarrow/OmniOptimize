@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Context } from "hono";
 import type { Queue, Job } from "bullmq";
 import type { IncomingBatch } from "../types";
+import { getCountryFromHeader } from "../utils/geolocation";
 
 /**
  * Zod schemas for incoming batch validation
@@ -104,6 +105,7 @@ export function validateBatch(
 /**
  * POST /ingest handler
  * Accept batch, validate, enqueue, respond 202
+ * Captures location from x-forwarded-for header for geolocation
  */
 export async function ingestHandler(c: Context, queue: Queue<IncomingBatch>) {
   try {
@@ -122,13 +124,23 @@ export async function ingestHandler(c: Context, queue: Queue<IncomingBatch>) {
 
     const batch = validation.data;
 
-    // Enqueue batch with timeout
+    // Get location from x-forwarded-for header (Render proxy)
+    const xForwardedFor = c.req.header("x-forwarded-for");
+    const location = await getCountryFromHeader(xForwardedFor);
+
+    // Enqueue batch with location metadata
     console.log("[Ingest] Enqueuing batch:", batch.batchId);
+    console.log("[Ingest] Location:", location);
     console.log("[Ingest] Queue instance:", queue ? "✓ exists" : "✗ null");
 
     try {
+      const jobData = {
+        ...batch,
+        location, // Add location to batch metadata
+      };
+
       const job = (await Promise.race([
-        queue.add("ingest", batch, {
+        queue.add("ingest", jobData, {
           jobId: batch.batchId,
         }),
         new Promise((_, reject) =>
@@ -137,7 +149,7 @@ export async function ingestHandler(c: Context, queue: Queue<IncomingBatch>) {
             5000
           )
         ),
-      ])) as Job<IncomingBatch>;
+      ])) as Job<any>;
 
       console.log(
         `[Ingest] ✓ Enqueued batch ${batch.batchId} with ${batch.events.length} events (Job ID: ${job.id})`
