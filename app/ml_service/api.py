@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Load Model & Scaler
+# load the trained model
 try:
     rf_model = joblib.load('seo_classifier_model.pkl')
     scaler = joblib.load('seo_scaler.pkl')
@@ -82,6 +82,8 @@ def predict_seo(data: SeoData):
         print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# the port to run the app
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
