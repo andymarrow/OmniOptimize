@@ -133,6 +133,7 @@ export const users = pgTable(
     projectId: text("project_id").notNull(),
     distinctId: text("distinct_id").notNull(), // userId ?? clientId (analytics identity)
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull(), // UTC, immutable
+    country: text("country"), // ISO-2 country code (e.g., 'US', 'GB', 'ET'). Set on first-seen, immutable.
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

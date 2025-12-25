@@ -18,21 +18,24 @@ export class UserRepository {
    * Idempotent: if user already exists, does nothing
    *
    * Called on every event ingest to ensure user is in first-seen cache
+   * Country is set ONLY on first insert, never updated on conflicts
    *
    * @param projectId - Project identifier
    * @param distinctId - Analytics identity (userId ?? clientId)
    * @param firstSeenAt - Timestamp of this event (first time we see this user)
+   * @param country - ISO-2 country code (e.g., 'US', 'ET'). Set only on first insert.
    */
   async upsertUserFirstSeen(
     projectId: string,
     distinctId: string,
-    firstSeenAt: Date
+    firstSeenAt: Date,
+    country?: string
   ): Promise<void> {
     return withErrorHandling("UserRepository.upsertUserFirstSeen", async () => {
       // Use raw SQL for ON CONFLICT DO NOTHING (Drizzle doesn't handle this efficiently)
       await db.execute(sql`
-        INSERT INTO users (project_id, distinct_id, first_seen_at, created_at)
-        VALUES (${projectId}, ${distinctId}, ${firstSeenAt}, NOW())
+        INSERT INTO users (project_id, distinct_id, first_seen_at, country, created_at)
+        VALUES (${projectId}, ${distinctId}, ${firstSeenAt}, ${country || null}, NOW())
         ON CONFLICT ON CONSTRAINT users_project_distinct_id_key DO NOTHING
       `);
     });

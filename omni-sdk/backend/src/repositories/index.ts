@@ -11,3 +11,7 @@ export {
   RetentionRepository,
 } from "./RetentionRepository";
 export { userRepository, UserRepository } from "./UserRepository";
+export {
+  trafficAnalyticsRepository,
+  TrafficAnalyticsRepository,
+} from "./TrafficAnalyticsRepository";

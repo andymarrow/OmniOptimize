@@ -70,10 +70,12 @@ export async function processBaseEvent({
 
   // Track retention analytics: record user first-seen and daily activity
   // Idempotent on both tables - safe to call on every event
+  // Country is set ONLY on first user creation, never updated
   await userRepository.upsertUserFirstSeen(
     event.projectId,
     distinctId,
-    eventTimestamp
+    eventTimestamp,
+    normalizedLocation // Pass country/location code
   );
 
   await userRepository.upsertUserDailyActivity(
