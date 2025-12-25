@@ -6,6 +6,9 @@ import {
   jsonb,
   numeric,
   integer,
+  date,
+  index,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -112,6 +115,90 @@ export const heatmapClicks = pgTable("heatmap_clicks", {
     .defaultNow()
     .notNull(),
 });
+
+/**
+ * Users table - retention analytics identity cache
+ * Stores the first time a distinct user (userId ?? clientId) was seen per project
+ * Used to define cohort membership and start date for retention calculations
+ *
+ * Constraints:
+ * - One row per (projectId, distinctId) combination
+ * - firstSeenAt is immutable (set on first insert, never updated)
+ * - Only insert when user is first encountered (upsert with ON CONFLICT DO NOTHING)
+ */
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: text("project_id").notNull(),
+    distinctId: text("distinct_id").notNull(), // userId ?? clientId (analytics identity)
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull(), // UTC, immutable
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    // Unique constraint: one entry per (projectId, distinctId)
+    uniqueProjectDistinct: unique("users_project_distinct_id_key").on(
+      table.projectId,
+      table.distinctId
+    ),
+    // Index for cohort queries: find all users who first appeared on a given date
+    projectFirstSeenIdx: index("users_project_first_seen_idx").on(
+      table.projectId,
+      table.firstSeenAt
+    ),
+  })
+);
+
+/**
+ * User daily activity table - retention accelerator
+ * Tracks the presence of a distinct user on a given calendar day (UTC)
+ * One row per (projectId, distinctId, activityDate) combination
+ *
+ * Purpose:
+ * - Fast day-N retention lookups without scanning raw events
+ * - Denormalization: trades storage for query speed
+ * - Used by retention queries to check if user had any activity on a specific day
+ *
+ * Schema notes:
+ * - activityDate is stored as DATE (not timestamp) in UTC
+ * - Computed from event timestamp as DATE(timestamp AT TIME ZONE 'UTC')
+ * - One row per day per user, regardless of event count
+ *
+ * Indexes:
+ * - (projectId, activityDate): for day-N cohort queries
+ * - (projectId, distinctId): for user-specific activity lookups
+ */
+export const userDailyActivity = pgTable(
+  "user_daily_activity",
+  {
+    projectId: text("project_id").notNull(),
+    distinctId: text("distinct_id").notNull(), // userId ?? clientId
+    activityDate: date("activity_date").notNull(), // DATE in UTC, e.g. '2025-01-15'
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(), // timestamp of most recent event that day
+  },
+  (table) => ({
+    // Composite primary key: one row per (projectId, distinctId, activityDate)
+    pk: unique("user_daily_activity_pk").on(
+      table.projectId,
+      table.distinctId,
+      table.activityDate
+    ),
+    // Index for day-N retention queries: find all activity on a specific date for a project
+    projectActivityDateIdx: index("user_daily_activity_project_date_idx").on(
+      table.projectId,
+      table.activityDate
+    ),
+    // Index for user-centric queries: find all activity dates for a specific user
+    projectDistinctIdx: index("user_daily_activity_project_distinct_idx").on(
+      table.projectId,
+      table.distinctId
+    ),
+  })
+);
 
 // Relations (optional, not used in this phase but good for type safety)
 export const sessionsRelations = relations(sessions, ({ many }) => ({

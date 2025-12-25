@@ -10,3 +10,4 @@ export {
   getProjectSessionsHandler,
 } from "./sessions";
 export { getHeatmapHandler, listHeatmapsHandler } from "./heatmaps";
+export { default as retentionRouter } from "./retention";

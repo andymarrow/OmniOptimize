@@ -1,9 +1,19 @@
-import { sessionRepository, eventRepository } from "../repositories";
+import {
+  sessionRepository,
+  eventRepository,
+  userRepository,
+} from "../repositories";
 import type { Event } from "../types";
 
 /**
  * Base event processor - handles common session/event tracking logic
  * Eliminates repetition across all event processors
+ *
+ * On every event, this:
+ * 1. Upserts session metadata
+ * 2. Inserts event into generic events table
+ * 3. Tracks user (analytics identity) for retention analytics
+ * 4. Records daily activity for retention cohort calculations
  */
 
 export interface ProcessEventParams {
@@ -15,7 +25,7 @@ export interface ProcessEventParams {
 }
 
 /**
- * Process base event operations (session upsert + event tracking)
+ * Process base event operations (session upsert + event tracking + retention tracking)
  * Centralized logic to avoid repetition across processors
  */
 export async function processBaseEvent({
@@ -30,6 +40,10 @@ export async function processBaseEvent({
 
   // Determine device: explicit device > screenClass > null
   const normalizedDevice = device || screenClass || null;
+
+  // Resolve analytics identity for retention
+  const distinctId = event.userId || event.clientId;
+  const eventTimestamp = new Date(event.timestamp);
 
   // Upsert session once with all metadata
   await sessionRepository.upsertSession({
@@ -49,10 +63,24 @@ export async function processBaseEvent({
     clientId: event.clientId,
     userId: event.userId || null,
     type: eventType,
-    timestamp: new Date(event.timestamp),
+    timestamp: eventTimestamp,
     url: event.url,
     referrer: event.referrer,
   });
+
+  // Track retention analytics: record user first-seen and daily activity
+  // Idempotent on both tables - safe to call on every event
+  await userRepository.upsertUserFirstSeen(
+    event.projectId,
+    distinctId,
+    eventTimestamp
+  );
+
+  await userRepository.upsertUserDailyActivity(
+    event.projectId,
+    distinctId,
+    eventTimestamp
+  );
 }
 
 /**

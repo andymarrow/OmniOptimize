@@ -10,6 +10,7 @@ import {
   getProjectSessionsHandler,
   getHeatmapHandler,
   listHeatmapsHandler,
+  retentionRouter,
 } from "./routes";
 import { createIngestionQueue } from "./queue";
 import { checkDbConnection } from "./db/client";
@@ -91,6 +92,7 @@ app.get("/", (c) => {
       replays: "GET /replays/:replayId",
       projectSessions: "GET /projects/:projectId/sessions",
       heatmaps: "GET /heatmaps/:projectId/:url",
+      retention: "GET /analytics/retention",
     },
   });
 });
@@ -103,6 +105,9 @@ app.get("/projects/:projectId/sessions", getProjectSessionsHandler);
 // Heatmap Routes
 app.get("/heatmaps/:projectId/:url", getHeatmapHandler);
 app.get("/heatmaps/:projectId", listHeatmapsHandler);
+
+// Analytics Routes
+app.route("/analytics", retentionRouter);
 
 // Start server
 const port = parseInt(process.env.PORT || "3000", 10);
