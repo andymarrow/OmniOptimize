@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
 const isLoginRoute = createRouteMatcher(['/login']);
 
+
 export default clerkMiddleware(async (auth, req) => {
   // 1. Get the user ID (New Syntax: await auth())
   const { userId } = await auth();
