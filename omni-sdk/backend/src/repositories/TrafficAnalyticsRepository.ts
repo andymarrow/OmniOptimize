@@ -190,6 +190,67 @@ export class TrafficAnalyticsRepository {
   }
 
   /**
+   * Get device distribution by session count
+   * Groups sessions by device type (desktop, mobile, tablet)
+   * Ignores sessions with NULL device
+   *
+   * @param projectId - Project identifier
+   * @param startDate - ISO date (YYYY-MM-DD)
+   * @param endDate - ISO date (YYYY-MM-DD)
+   */
+  async getDeviceDistribution(
+    projectId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<
+    Array<{
+      device: string;
+      sessions: number;
+      percentage: number;
+    }>
+  > {
+    return withErrorHandling(
+      "TrafficAnalyticsRepository.getDeviceDistribution",
+      async () => {
+        const result = await db.execute(sql`
+          WITH device_counts AS (
+            SELECT 
+              device,
+              COUNT(*) as session_count
+            FROM sessions
+            WHERE project_id = ${projectId}
+            AND DATE(created_at AT TIME ZONE 'UTC') >= ${startDate}::date
+            AND DATE(created_at AT TIME ZONE 'UTC') <= ${endDate}::date
+            AND device IS NOT NULL
+            GROUP BY device
+          ),
+          total AS (
+            SELECT SUM(session_count) as total_sessions
+            FROM device_counts
+          )
+          SELECT 
+            device_counts.device,
+            device_counts.session_count,
+            ROUND(
+              (device_counts.session_count::numeric / total.total_sessions * 100)::numeric,
+              0
+            )::integer as percentage
+          FROM device_counts
+          CROSS JOIN total
+          WHERE total.total_sessions > 0
+          ORDER BY device_counts.session_count DESC
+        `);
+
+        return (result.rows || []).map((row: any) => ({
+          device: String(row.device),
+          sessions: Number(row.session_count),
+          percentage: Number(row.percentage),
+        }));
+      }
+    );
+  }
+
+  /**
    * Calculate percentage change between two values
    * Handles division by zero and edge cases
    *

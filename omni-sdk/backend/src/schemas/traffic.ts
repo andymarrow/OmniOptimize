@@ -126,6 +126,28 @@ export const trafficAnalyticsResponseSchema = z.object({
       )
       .describe("User distribution by country (based on first-seen location)"),
   }),
+
+  devices: z.object({
+    distribution: z
+      .array(
+        z.object({
+          device: z
+            .enum(["desktop", "mobile", "tablet"])
+            .describe("Device type"),
+          sessions: z
+            .number()
+            .nonnegative()
+            .int()
+            .describe("Number of sessions"),
+          percentage: z
+            .number()
+            .min(0)
+            .max(100)
+            .describe("Percentage of total sessions"),
+        })
+      )
+      .describe("Session distribution by device type"),
+  }),
 });
 
 /**

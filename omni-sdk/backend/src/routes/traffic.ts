@@ -41,6 +41,14 @@ app.get("/", async (c) => {
       query.endDate
     );
 
+    // Fetch device distribution
+    const deviceDistribution =
+      await trafficAnalyticsRepository.getDeviceDistribution(
+        query.projectId,
+        query.startDate,
+        query.endDate
+      );
+
     // Transform to response format with comparison percentages
     const response = trafficAnalyticsResponseSchema.parse({
       range: metrics.range,
@@ -104,6 +112,9 @@ app.get("/", async (c) => {
       },
       demographics: {
         countries: metrics.countries,
+      },
+      devices: {
+        distribution: deviceDistribution,
       },
     });
 
