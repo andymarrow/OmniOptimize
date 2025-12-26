@@ -4,8 +4,16 @@ import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { openAPIRouteHandler } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
-import { createHealthRouter } from "./routes/health";
-import { createIngestRouter } from "./routes/ingest";
+import {
+  createHealthRouter,
+  createIngestRouter,
+  createSessionsRouter,
+  createHeatmapsRouter,
+  createRetentionRouter,
+  createTrafficRouter,
+  createOverviewRouter,
+  createTopPagesRouter,
+} from "./routes";
 import { createIngestionQueue } from "./queue";
 import { checkDbConnection } from "./db/client";
 import { startWorker } from "./worker";
@@ -108,6 +116,18 @@ async function initialize() {
 
   // Ingest route
   app.route("/ingest", createIngestRouter(queue));
+
+  // Sessions routes
+  app.route("/sessions", createSessionsRouter());
+
+  // Heatmaps routes
+  app.route("/heatmaps", createHeatmapsRouter());
+
+  // Analytics routes
+  app.route("/analytics/retention", createRetentionRouter());
+  app.route("/analytics/traffic", createTrafficRouter());
+  app.route("/analytics/overview", createOverviewRouter());
+  app.route("/analytics/top-pages", createTopPagesRouter());
 
   console.log("✓ Backend initialized");
 }

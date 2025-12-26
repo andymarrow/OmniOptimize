@@ -1,178 +1,209 @@
+import { Hono } from "hono";
+import { describeRoute, resolver } from "hono-openapi";
 import {
-  sessionRepository,
-  rrwebRepository,
-  heatmapRepository,
-} from "../repositories";
-import type { Context } from "hono";
+  getSessionHandler,
+  getReplayHandler,
+  getProjectSessionsHandler,
+} from "../handlers";
+import { z } from "zod";
 
 /**
- * GET /sessions/:sessionId
- * Fetch a session and all its rrweb replay events
+ * Create sessions router
  */
-export async function getSessionHandler(c: Context) {
-  try {
-    const sessionId = c.req.param("sessionId");
+export function createSessionsRouter() {
+  const router = new Hono();
 
-    if (!sessionId) {
-      return c.json({ error: "sessionId is required" }, 400);
-    }
-
-    // Get session metadata
-    const session = await sessionRepository.getSession(sessionId);
-    if (!session) {
-      return c.json({ error: "Session not found" }, 404);
-    }
-
-    // Get all rrweb events for this session
-    const events = await rrwebRepository.getRrwebEventsBySession(sessionId);
-
-    // Group events by replayId (each tab gets its own replay)
-    const replays = new Map<string, typeof events>();
-    for (const event of events) {
-      const replay = replays.get(event.replayId) || [];
-      replay.push(event);
-      replays.set(event.replayId, replay);
-    }
-
-    return c.json({
-      session: {
-        id: session.id,
-        projectId: session.projectId,
-        clientId: session.clientId,
-        userId: session.userId,
-        location: session.location,
-        device: session.device,
-        createdAt: session.createdAt,
-        updatedAt: session.updatedAt,
+  /**
+   * GET /sessions/:sessionId
+   * Fetch a session and all its rrweb replay events
+   */
+  router.get(
+    "/:sessionId",
+    describeRoute({
+      description:
+        "Fetch a session and all its rrweb replay events grouped by replay ID",
+      responses: {
+        200: {
+          description: "Session found with replay events",
+          content: {
+            "application/json": {
+              schema: resolver(
+                z.object({
+                  data: z.object({
+                    session: z.object({
+                      id: z.string(),
+                      projectId: z.string(),
+                      clientId: z.string(),
+                      userId: z.string().nullable(),
+                      location: z.string(),
+                      device: z.string(),
+                      createdAt: z.date(),
+                      updatedAt: z.date(),
+                    }),
+                    eventCount: z.number(),
+                    replays: z.array(
+                      z.object({
+                        replayId: z.string(),
+                        eventCount: z.number(),
+                        startTime: z.number().optional(),
+                        endTime: z.number().optional(),
+                        events: z.array(z.record(z.any())),
+                      })
+                    ),
+                  }),
+                })
+              ),
+            },
+          },
+        },
+        400: {
+          description: "Missing or invalid sessionId",
+          content: {
+            "application/json": {
+              schema: resolver(z.object({ error: z.string() })),
+            },
+          },
+        },
+        404: {
+          description: "Session not found",
+          content: {
+            "application/json": {
+              schema: resolver(z.object({ error: z.string() })),
+            },
+          },
+        },
       },
-      eventCount: events.length,
-      replays: Array.from(replays.entries()).map(
-        ([replayId, replayEvents]) => ({
-          replayId,
-          eventCount: replayEvents.length,
-          startTime: replayEvents[0]?.timestamp,
-          endTime: replayEvents[replayEvents.length - 1]?.timestamp,
-          events: replayEvents.map((e) => ({
-            id: e.id,
-            eventId: e.eventId,
-            timestamp: e.timestamp,
-            url: e.url,
-            rrwebPayload: e.rrwebPayload,
-            schemaVersion: e.schemaVersion,
-          })),
-        })
-      ),
-    });
-  } catch (error) {
-    console.error("[GetSession] Error:", error);
-    return c.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
+    }),
+    async (c) => {
+      const sessionId = c.req.param("sessionId");
+      const result = await getSessionHandler(sessionId);
+
+      if ("error" in result) {
+        return c.json(
+          { error: result.error },
+          (result.statusCode || 400) as 400 | 404
+        );
+      }
+
+      return c.json(result.data, 200);
+    }
+  );
+
+  /**
+   * GET /replays/:replayId
+   * Fetch a specific replay (single tab session)
+   */
+  router.get(
+    "/replays/:replayId",
+    describeRoute({
+      description: "Fetch a specific replay with all rrweb events",
+      responses: {
+        200: {
+          description: "Replay found with events",
+          content: {
+            "application/json": {
+              schema: resolver(
+                z.object({
+                  data: z.object({
+                    replayId: z.string(),
+                    sessionId: z.string(),
+                    clientId: z.string(),
+                    userId: z.string().nullable(),
+                    eventCount: z.number(),
+                    startTime: z.number(),
+                    endTime: z.number(),
+                    events: z.array(z.record(z.any())),
+                  }),
+                })
+              ),
+            },
+          },
+        },
+        400: {
+          description: "Missing or invalid replayId",
+          content: {
+            "application/json": {
+              schema: resolver(z.object({ error: z.string() })),
+            },
+          },
+        },
+        404: {
+          description: "Replay not found",
+          content: {
+            "application/json": {
+              schema: resolver(z.object({ error: z.string() })),
+            },
+          },
+        },
       },
-      500
-    );
-  }
+    }),
+    async (c) => {
+      const replayId = c.req.param("replayId");
+      const result = await getReplayHandler(replayId);
+
+      if ("error" in result) {
+        return c.json(
+          { error: result.error },
+          (result.statusCode || 400) as 400 | 404
+        );
+      }
+
+      return c.json(result.data, 200);
+    }
+  );
+
+  /**
+   * GET /projects/:projectId/sessions
+   * Fetch all sessions for a project
+   */
+  router.get(
+    "/projects/:projectId",
+    describeRoute({
+      description: "Fetch all sessions for a project with statistics",
+      responses: {
+        200: {
+          description: "Project sessions retrieved",
+          content: {
+            "application/json": {
+              schema: resolver(
+                z.object({
+                  data: z.object({
+                    projectId: z.string(),
+                    sessionCount: z.number(),
+                    sessions: z.array(z.record(z.any())),
+                  }),
+                })
+              ),
+            },
+          },
+        },
+        400: {
+          description: "Missing or invalid projectId",
+          content: {
+            "application/json": {
+              schema: resolver(z.object({ error: z.string() })),
+            },
+          },
+        },
+      },
+    }),
+    async (c) => {
+      const projectId = c.req.param("projectId");
+      const result = await getProjectSessionsHandler(projectId);
+
+      if ("error" in result) {
+        return c.json(
+          { error: result.error },
+          (result.statusCode || 400) as 400
+        );
+      }
+
+      return c.json(result.data, 200);
+    }
+  );
+
+  return router;
 }
 
-/**
- * GET /replays/:replayId
- * Fetch a specific replay (single tab session)
- */
-export async function getReplayHandler(c: Context) {
-  try {
-    const replayId = c.req.param("replayId");
-
-    if (!replayId) {
-      return c.json({ error: "replayId is required" }, 400);
-    }
-
-    const events = await rrwebRepository.getRrwebEventsByReplay(replayId);
-
-    if (events.length === 0) {
-      return c.json({ error: "Replay not found" }, 404);
-    }
-
-    return c.json({
-      replayId,
-      sessionId: events[0].sessionId,
-      clientId: events[0].clientId,
-      userId: events[0].userId,
-      eventCount: events.length,
-      startTime: events[0].timestamp,
-      endTime: events[events.length - 1].timestamp,
-      events: events.map((e) => ({
-        id: e.id,
-        eventId: e.eventId,
-        timestamp: e.timestamp,
-        url: e.url,
-        rrwebPayload: e.rrwebPayload,
-        schemaVersion: e.schemaVersion,
-        pageWidth: e.pageWidth,
-        pageHeight: e.pageHeight,
-        viewportWidth: e.viewportWidth,
-        viewportHeight: e.viewportHeight,
-      })),
-    });
-  } catch (error) {
-    console.error("[GetReplay] Error:", error);
-    return c.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      500
-    );
-  }
-}
-
-/**
- * GET /projects/:projectId/sessions
- * Fetch all sessions for a project with aggregated stats
- */
-export async function getProjectSessionsHandler(c: Context) {
-  try {
-    const projectId = c.req.param("projectId");
-
-    if (!projectId) {
-      return c.json({ error: "projectId is required" }, 400);
-    }
-
-    // Get all sessions with stats
-    const sessions = await sessionRepository.getSessionsWithStats(projectId);
-
-    // Format response
-    const formattedSessions = sessions.map((session) => {
-      const duration =
-        session.updatedAt.getTime() - session.createdAt.getTime();
-      const startedAt = session.createdAt.getTime();
-
-      return {
-        id: session.id,
-        clientId: session.clientId,
-        userId: session.userId,
-        location: session.location,
-        device: session.device,
-        duration, // milliseconds
-        startedAt, // Unix timestamp
-        endedAt: session.updatedAt.getTime(), // Unix timestamp
-        eventsCount: session.eventsCount,
-        rageClicks: session.rageClicks,
-        createdAt: session.createdAt,
-        updatedAt: session.updatedAt,
-      };
-    });
-
-    return c.json({
-      projectId,
-      sessionCount: formattedSessions.length,
-      sessions: formattedSessions,
-    });
-  } catch (error) {
-    console.error("[GetProjectSessions] Error:", error);
-    return c.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      500
-    );
-  }
-}
+// Export default instance (overridden in index.ts)
+export default new Hono();
