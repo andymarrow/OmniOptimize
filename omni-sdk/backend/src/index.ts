@@ -2,9 +2,11 @@ import "dotenv/config";
 import { Hono } from "hono";
 import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
+import { openAPIRouteHandler } from "hono-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
+import { createHealthRouter } from "./routes/health";
 import {
   ingestHandler,
-  healthHandler,
   getSessionHandler,
   getReplayHandler,
   getProjectSessionsHandler,
@@ -65,58 +67,81 @@ async function initialize() {
     // Don't fail if worker doesn't start, it can be run separately
   }
 
+  // Health router with OpenAPI docs
+  app.route("/", createHealthRouter(queue));
+
+  // OpenAPI documentation endpoint
+  app.get(
+    "/openapi.json",
+    openAPIRouteHandler(app, {
+      documentation: {
+        info: {
+          title: "OmniOptimize Analytics Backend",
+          version: "1.0.0",
+          description:
+            "High-performance analytics ingestion and querying service",
+        },
+        servers: [
+          {
+            url: process.env.BACKEND_URL || "http://localhost:5000",
+            description: "API Server",
+          },
+        ],
+      },
+    })
+  );
+
+  // Swagger UI
+  app.get("/docs", swaggerUI({ url: "/openapi.json" }));
+
+  // Root endpoint
+  app.get("/", (c) => {
+    return c.json({
+      service: "omni-ingestor",
+      version: "1.0.0",
+      status: "running",
+      docs: "/docs",
+      openapi: "/openapi.json",
+      endpoints: {
+        health: "GET /health",
+        ingest: "POST /ingest",
+        sessions: "GET /sessions/:sessionId",
+        replays: "GET /replays/:replayId",
+        projectSessions: "GET /projects/:projectId/sessions",
+        heatmaps: "GET /heatmaps/:projectId/:url",
+        retention: "GET /analytics/retention",
+        traffic: "GET /analytics/traffic",
+        overview: "GET /analytics/overview",
+        topPages: "GET /analytics/top-pages",
+      },
+    });
+  });
+
+  // Ingest route
+  app.post("/ingest", async (c) => {
+    if (!queue) {
+      return c.json({ error: "Queue not initialized" }, 503);
+    }
+    return ingestHandler(c, queue);
+  });
+
+  // Session Replay Routes
+  app.get("/sessions/:sessionId", getSessionHandler);
+  app.get("/replays/:replayId", getReplayHandler);
+  app.get("/projects/:projectId/sessions", getProjectSessionsHandler);
+
+  // Heatmap Routes
+  app.get("/heatmaps/:projectId/:url", getHeatmapHandler);
+  app.get("/heatmaps/:projectId", listHeatmapsHandler);
+
+  // Analytics Routes
+  app.route("/analytics", retentionRouter);
+  app.route("/analytics/traffic", trafficRouter);
+  app.route("/analytics/overview", overviewRouter);
+  app.route("/analytics/top-pages", topPagesRouter);
+
   console.log("✓ Backend initialized");
 }
-
-// Routes
-app.get("/health", (c) => {
-  if (!queue) {
-    return c.json({ error: "Queue not initialized" }, 503);
-  }
-  return healthHandler(c, queue);
-});
-
-app.post("/ingest", async (c) => {
-  if (!queue) {
-    return c.json({ error: "Queue not initialized" }, 503);
-  }
-  return ingestHandler(c, queue);
-});
-
-app.get("/", (c) => {
-  return c.json({
-    service: "analytics-backend",
-    version: "1.0.0",
-    status: "running",
-    endpoints: {
-      health: "GET /health",
-      ingest: "POST /ingest",
-      sessions: "GET /sessions/:sessionId",
-      replays: "GET /replays/:replayId",
-      projectSessions: "GET /projects/:projectId/sessions",
-      heatmaps: "GET /heatmaps/:projectId/:url",
-      retention: "GET /analytics/retention",
-      traffic: "GET /analytics/traffic",
-      overview: "GET /analytics/overview",
-      topPages: "GET /analytics/top-pages",
-    },
-  });
-});
-
-// Session Replay Routes
-app.get("/sessions/:sessionId", getSessionHandler);
-app.get("/replays/:replayId", getReplayHandler);
-app.get("/projects/:projectId/sessions", getProjectSessionsHandler);
-
-// Heatmap Routes
-app.get("/heatmaps/:projectId/:url", getHeatmapHandler);
-app.get("/heatmaps/:projectId", listHeatmapsHandler);
-
-// Analytics Routes
-app.route("/analytics", retentionRouter);
-app.route("/analytics/traffic", trafficRouter);
-app.route("/analytics/overview", overviewRouter);
-app.route("/analytics/top-pages", topPagesRouter);
 
 // Start server
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -124,6 +149,7 @@ const port = parseInt(process.env.PORT || "3000", 10);
 initialize()
   .then(() => {
     console.log(`\n✓ Server listening on http://localhost:${port}`);
+    console.log(`📚 API docs available at http://localhost:${port}/docs`);
   })
   .catch((error) => {
     console.error("Failed to initialize:", error);

@@ -2,8 +2,8 @@
  * Routes barrel export
  */
 
+export { default as healthRouter } from "./health";
 export { ingestHandler } from "./ingest";
-export { healthHandler } from "./health";
 export {
   getSessionHandler,
   getReplayHandler,
