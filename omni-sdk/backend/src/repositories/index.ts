@@ -19,3 +19,4 @@ export {
   overviewAnalyticsRepository,
   OverviewAnalyticsRepository,
 } from "./OverviewAnalyticsRepository";
+export { topPagesRepository, TopPagesRepository } from "./TopPagesRepository";
