@@ -15,3 +15,7 @@ export {
   trafficAnalyticsRepository,
   TrafficAnalyticsRepository,
 } from "./TrafficAnalyticsRepository";
+export {
+  overviewAnalyticsRepository,
+  OverviewAnalyticsRepository,
+} from "./OverviewAnalyticsRepository";

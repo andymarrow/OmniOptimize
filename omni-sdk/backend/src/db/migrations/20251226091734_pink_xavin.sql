@@ -1,0 +1,3 @@
+CREATE INDEX "user_daily_activity_project_date_idx" ON "user_daily_activity" USING btree ("project_id","activity_date");--> statement-breakpoint
+CREATE INDEX "user_daily_activity_project_distinct_idx" ON "user_daily_activity" USING btree ("project_id","distinct_id");--> statement-breakpoint
+ALTER TABLE "user_daily_activity" ADD CONSTRAINT "user_daily_activity_pk" UNIQUE("project_id","distinct_id","activity_date");
