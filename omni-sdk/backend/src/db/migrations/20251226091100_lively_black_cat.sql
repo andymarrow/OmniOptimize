@@ -1,0 +1,2 @@
+CREATE INDEX "users_project_first_seen_idx" ON "users" USING btree ("project_id","first_seen_at");--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_project_distinct_id_key" UNIQUE("project_id","distinct_id");

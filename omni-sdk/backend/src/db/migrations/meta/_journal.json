@@ -8,6 +8,41 @@
       "when": 1766258312429,
       "tag": "20251220191832_narrow_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766576264034,
+      "tag": "20251224113743_absurd_pretty_boy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766657320553,
+      "tag": "20251225100840_outgoing_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766663719313,
+      "tag": "20251225115519_complete_martin_li",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766740260094,
+      "tag": "20251226091100_lively_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1766740654856,
+      "tag": "20251226091734_pink_xavin",
+      "breakpoints": true
     }
   ]
 }

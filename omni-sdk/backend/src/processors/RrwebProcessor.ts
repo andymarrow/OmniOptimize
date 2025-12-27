@@ -1,24 +1,29 @@
-import { sessionRepository } from "../repositories";
 import { rrwebRepository } from "../repositories";
+import { processBaseEvent, executeProcessor } from "./BaseEventProcessor";
 import type { RrwebEventData } from "../types";
 
 /**
  * Process rrweb replay events
- * - Upsert session
+ * - Base session/event tracking (centralized)
  * - Store raw rrweb payload verbatim
  * - Preserve ordering by timestamp
  */
-export async function processRrwebEvent(event: RrwebEventData) {
-  try {
-    // Ensure session exists
-    await sessionRepository.upsertSession({
-      sessionId: event.sessionId,
-      projectId: event.projectId,
-      clientId: event.clientId,
-      userId: event.userId || null,
+export async function processRrwebEvent(
+  event: RrwebEventData,
+  location?: string,
+  device?: string
+) {
+  await executeProcessor("RrwebProcessor", event.eventId, async () => {
+    // Base event processing (session upsert + event tracking)
+    await processBaseEvent({
+      event,
+      eventType: "rrweb",
+      location,
+      device,
+      screenClass: undefined,
     });
 
-    // Insert rrweb event
+    // Insert rrweb event with detailed data
     await rrwebRepository.insertRrwebEvent({
       eventId: event.eventId,
       projectId: event.projectId,
@@ -36,13 +41,5 @@ export async function processRrwebEvent(event: RrwebEventData) {
       viewportWidth: event.viewport?.w,
       viewportHeight: event.viewport?.h,
     });
-
-    console.log(`[RrwebProcessor] Processed event ${event.eventId}`);
-  } catch (error) {
-    console.error(
-      `[RrwebProcessor] Error processing event ${event.eventId}:`,
-      error
-    );
-    throw error;
-  }
+  });
 }

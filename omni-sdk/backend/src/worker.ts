@@ -10,7 +10,12 @@ import type {
   Event,
   RrwebEventData,
   ClickEventData,
+  PageViewEventData,
 } from "./types";
+
+interface IncomingBatchWithLocation extends IncomingBatch {
+  location?: string;
+}
 
 /**
  * Start the worker process
@@ -19,7 +24,7 @@ import type {
 export async function startWorker() {
   const queue = await createIngestionQueue();
 
-  const worker = new Worker<IncomingBatch>(
+  const worker = new Worker<IncomingBatchWithLocation>(
     "ingest",
     async (job) => {
       console.log(
@@ -32,10 +37,19 @@ export async function startWorker() {
         errors: [] as Array<{ eventId: string; error: string }>,
       };
 
+      // Extract location from batch metadata
+      const location = job.data.location || "ET";
+
       // Process each event independently (don't fail batch on single event error)
       for (const event of job.data.events) {
         try {
-          await routeEvent(event);
+          // Determine device from screenClass or event properties
+          let device: string | undefined;
+          if ("screenClass" in event && event.screenClass) {
+            device = event.screenClass;
+          }
+
+          await routeEvent(event, location, device);
           results.succeeded++;
         } catch (error) {
           results.failed++;
@@ -96,17 +110,22 @@ export async function startWorker() {
 
 /**
  * Route event to appropriate processor based on type
+ * Passes location and device to processors
  */
-async function routeEvent(event: Event) {
+async function routeEvent(event: Event, location?: string, device?: string) {
   const eventType = event.type;
 
   switch (eventType) {
     case "rrweb":
-      return await processRrwebEvent(event as RrwebEventData);
+      return await processRrwebEvent(event as RrwebEventData, location, device);
     case "click":
-      return await processClickEvent(event as ClickEventData);
+      return await processClickEvent(event as ClickEventData, location, device);
     case "pageview":
-      return await processPageViewEvent(event);
+      return await processPageViewEvent(
+        event as PageViewEventData,
+        location,
+        device
+      );
     case "input":
     case "route":
     case "custom":

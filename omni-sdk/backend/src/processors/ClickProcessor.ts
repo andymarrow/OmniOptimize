@@ -1,21 +1,26 @@
-import { sessionRepository } from "../repositories";
 import { heatmapRepository } from "../repositories";
+import { processBaseEvent, executeProcessor } from "./BaseEventProcessor";
 import type { ClickEventData } from "../types";
 
 /**
  * Process click events
- * - Upsert session
+ * - Base session/event tracking (centralized)
  * - Aggregate clicks into heatmap grid
  * - Increment bucket counter
  */
-export async function processClickEvent(event: ClickEventData) {
-  try {
-    // Ensure session exists
-    await sessionRepository.upsertSession({
-      sessionId: event.sessionId,
-      projectId: event.projectId,
-      clientId: event.clientId,
-      userId: event.userId || null,
+export async function processClickEvent(
+  event: ClickEventData,
+  location?: string,
+  device?: string
+) {
+  await executeProcessor("ClickProcessor", event.eventId, async () => {
+    // Base event processing (session upsert + event tracking)
+    await processBaseEvent({
+      event,
+      eventType: "click",
+      location,
+      device,
+      screenClass: event.screenClass,
     });
 
     // Record click in heatmap
@@ -37,13 +42,5 @@ export async function processClickEvent(event: ClickEventData) {
       viewportWidth: event.viewport?.w,
       viewportHeight: event.viewport?.h,
     });
-
-    console.log(`[ClickProcessor] Processed event ${event.eventId}`);
-  } catch (error) {
-    console.error(
-      `[ClickProcessor] Error processing event ${event.eventId}:`,
-      error
-    );
-    throw error;
-  }
+  });
 }

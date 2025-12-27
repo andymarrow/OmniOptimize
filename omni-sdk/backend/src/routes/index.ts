@@ -2,7 +2,11 @@
  * Routes barrel export
  */
 
-export { ingestHandler } from "./ingest";
-export { healthHandler } from "./health";
-export { getSessionHandler, getReplayHandler } from "./sessions";
-export { getHeatmapHandler, listHeatmapsHandler } from "./heatmaps";
+export { createHealthRouter } from "./health";
+export { createIngestRouter } from "./ingest";
+export { createSessionsRouter } from "./sessions";
+export { createHeatmapsRouter } from "./heatmaps";
+export { createRetentionRouter } from "./retention";
+export { createTrafficRouter } from "./traffic";
+export { createOverviewRouter } from "./overview";
+export { createTopPagesRouter } from "./topPages";
