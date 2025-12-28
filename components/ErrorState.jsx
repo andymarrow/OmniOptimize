@@ -28,7 +28,7 @@ export const ErrorState = ({
       {/* Content */}
       <div className="relative z-10 max-w-md text-center space-y-4">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+          <h2 className="text-2xl font-bold text-white drop-shadow-lg uppercase">
             {title}
           </h2>
           <p className="text-sm text-emerald-100 drop-shadow-lg">{message}</p>

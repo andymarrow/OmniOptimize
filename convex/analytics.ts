@@ -1,6 +1,12 @@
-import { action, mutation } from "./_generated/server";
+import {
+  action,
+  mutation,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel"; // <--- Import Id type
+import { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 
 async function analyticsFetch(
   url: string,
@@ -152,6 +158,74 @@ export const getTrafficData = action({
 
     const response = await analyticsFetch(`/analytics/traffic?${params}`);
 
+    return response;
+  },
+});
+
+// Internal mutation: Verify user has access to project
+export const verifyProjectAccess = internalQuery({
+  args: {
+    clerkId: v.string(),
+    projectId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get user by Clerk ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get user's team membership
+    const membership = await ctx.db
+      .query("team_members")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .first();
+
+    if (!membership) {
+      throw new Error("User has no team membership");
+    }
+
+    // Get project and verify it belongs to user's team
+    const project = await ctx.db.get(args.projectId as Id<"projects">);
+    if (!project || project.teamId !== membership.teamId) {
+      throw new Error("Forbidden: no access to this project");
+    }
+
+    return true;
+  },
+});
+
+// Top Pages: GET /analytics/top-pages
+export const getTopPages = action({
+  args: {
+    projectId: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    // Call backend API
+    const params = new URLSearchParams({
+      projectId: args.projectId,
+      startDate: args.startDate,
+      endDate: args.endDate,
+    });
+
+    const response = await analyticsFetch(`/analytics/top-pages?${params}`);
     return response;
   },
 });

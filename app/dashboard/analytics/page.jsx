@@ -65,6 +65,7 @@ export default function AnalyticsPage() {
 
   // Convex action
   const getTrafficData = useAction(api.analytics.getTrafficData);
+  const getTopPages = useAction(api.analytics.getTopPages);
 
   // Fetch data when URL params change
   useEffect(() => {
@@ -76,12 +77,19 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
-        const data = await getTrafficData({
-          projectId: activeProject._id,
-          startDate,
-          endDate,
-        });
-        setTrafficData(data);
+        const [traffic, topPages] = await Promise.all([
+          getTrafficData({
+            projectId: activeProject._id,
+            startDate,
+            endDate,
+          }),
+          getTopPages({
+            projectId: activeProject._id,
+            startDate,
+            endDate,
+          }),
+        ]);
+        setTrafficData({ ...traffic, topPages });
         setError(null);
       } catch (err) {
         console.error("Error fetching traffic data:", err);
@@ -179,7 +187,7 @@ export default function AnalyticsPage() {
           onRetry={() => {
             // Refetch by re-triggering the effect
             const params = new URLSearchParams(searchParams);
-            router.push(`?${params.toString()}s`);
+            router.refresh();
           }}
           onContact={() => {
             window.location.href = "mailto:support@omnoptimize.com";
@@ -208,7 +216,10 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1">
-            <TopPagesTable />
+            <TopPagesTable
+              pages={trafficData?.topPages?.pages || []}
+              loading={loading}
+            />
           </div>
         </>
       )}
