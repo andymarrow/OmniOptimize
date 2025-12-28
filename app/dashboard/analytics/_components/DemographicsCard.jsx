@@ -28,7 +28,22 @@ const COLORS_OUTER = [
   "#ffa600",
 ];
 
-const DemographicsCard = ({ data, deviceData }) => {
+const DemographicsCard = ({ data, deviceData, loading = false }) => {
+  if (loading) {
+    return (
+      <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
+            User Demographics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!data || !deviceData) {
     return (
       <Card className="border-slate-200 dark:border-slate-800 shadow-sm">

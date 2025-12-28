@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Loader2, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import {
@@ -20,10 +20,17 @@ import HeatmapCard from "./_components/HeatmapCard";
 import MetricsGrid from "./_components/MetricsGrid";
 import DeepInsightsModal from "./_components/DeepInsightsModal";
 
+// Skeleton & Error
+import { AnalyticsDashboardSkeleton } from "@/components/skeleton/dashboardSkeletons";
+import ErrorState from "@/components/ErrorState";
+
 // Project & Convex
 import { useProject } from "@/app/_context/ProjectContext";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+
+// Images
+import confusedCatImage from "@/assets/confused-cat.png";
 
 // Date utilities
 import {
@@ -62,11 +69,6 @@ export default function AnalyticsPage() {
   // Fetch data when URL params change
   useEffect(() => {
     if (!activeProject || !startDate || !endDate) {
-      console.log("Missing required params:", {
-        activeProject,
-        startDate,
-        endDate,
-      });
       return;
     }
 
@@ -74,17 +76,11 @@ export default function AnalyticsPage() {
       setLoading(true);
       setError(null);
       try {
-        console.log("Fetching traffic data with:", {
-          projectId: activeProject._id,
-          startDate,
-          endDate,
-        });
         const data = await getTrafficData({
           projectId: activeProject._id,
           startDate,
           endDate,
         });
-        console.log("Traffic data received:", data);
         setTrafficData(data);
         setError(null);
       } catch (err) {
@@ -173,21 +169,29 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
-        </div>
-      )}
+      {loading && <AnalyticsDashboardSkeleton />}
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-lg p-4">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        </div>
+        <ErrorState
+          title="Well, this is awkward..."
+          message="Our server just tripped over its own shoelaces."
+          onRetry={() => {
+            // Refetch by re-triggering the effect
+            const params = new URLSearchParams(searchParams);
+            router.push(`?${params.toString()}s`);
+          }}
+          onContact={() => {
+            window.location.href = "mailto:support@omnoptimize.com";
+          }}
+          showRefresh
+          showContact
+          backgroundImage={confusedCatImage.src}
+        />
       )}
 
       {/* Content */}
-      {!loading && trafficData && (
+      {!loading && !error && trafficData && (
         <>
           <MetricsGrid data={trafficData.cards} />
 

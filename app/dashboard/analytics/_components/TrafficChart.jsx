@@ -13,7 +13,7 @@ import {
 import { formatChartLabel } from "@/utils/dateFormatter";
 
 const TrafficChart = ({ data }) => {
-  if (!data || data.length === 0) {
+  if (!data) {
     return (
       <Card className="col-span-4 border-slate-200 dark:border-slate-800 shadow-sm">
         <CardHeader>
