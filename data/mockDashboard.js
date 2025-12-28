@@ -1,38 +1,41 @@
-import { 
-  LayoutDashboard, Search, BarChart3, GitBranch, 
-  Settings, Zap, Shield, MousePointer2, Globe 
+import {
+  LayoutDashboard,
+  Search,
+  BarChart3,
+  GitBranch,
+  Settings,
+  Zap,
+  Shield,
+  MousePointer2,
+  Globe,
 } from "lucide-react";
 
 export const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { 
-    name: "SEO Optimization", 
-    href: "/dashboard/seo", 
+  {
+    name: "SEO Optimization",
+    href: "/dashboard/seo",
     icon: Search,
     children: [
       { name: "Audit Report", href: "/dashboard/seo" },
       { name: "Keyword Tracker", href: "/dashboard/seo" },
       { name: "Lighthouse Deep Dive", href: "/dashboard/seo" },
-    ]
+    ],
   },
-  { 
-    name: "Analytics SDK", 
-    href: "/dashboard/analytics", 
+  {
+    name: "Analytics SDK",
+    href: "/dashboard/analytics",
     icon: BarChart3,
     children: [
-      { name: "Traffic Overview", href: "/dashboard/analytics" },
-      { name: "Heatmaps", href: "/dashboard/analytics" },
-      { name: "User Journeys", href: "/dashboard/analytics" },
-    ]
+      { name: "Traffic & Heatmap", href: "/dashboard/analytics" },
+      { name: "Deep Insight", href: "/dashboard/deep-insight" },
+    ],
   },
-  { 
-    name: "Code Health", 
-    href: "/dashboard/code", 
+  {
+    name: "Code Health",
+    href: "/dashboard/code",
     icon: GitBranch,
-    children: [
-      { name: "Commit Log", href: "/dashboard/code" },
-      { name: "Security Scan", href: "/dashboard/code" },
-    ]
+    children: [{ name: "Commit & Seurity", href: "/dashboard/code" }],
   },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
@@ -46,8 +49,26 @@ export const mockOverview = {
     { title: "Critical Issues", value: "3", change: "0", trend: "neutral" },
   ],
   recentCommits: [
-    { id: "c1", message: "fix: hydration error on mobile", author: "Sami", time: "2h ago", status: "safe" },
-    { id: "c2", message: "feat: add stripe checkout", author: "Sami", time: "5h ago", status: "warning" },
-    { id: "c3", message: "chore: update dependencies", author: "Bot", time: "1d ago", status: "safe" },
-  ]
+    {
+      id: "c1",
+      message: "fix: hydration error on mobile",
+      author: "Sami",
+      time: "2h ago",
+      status: "safe",
+    },
+    {
+      id: "c2",
+      message: "feat: add stripe checkout",
+      author: "Sami",
+      time: "5h ago",
+      status: "warning",
+    },
+    {
+      id: "c3",
+      message: "chore: update dependencies",
+      author: "Bot",
+      time: "1d ago",
+      status: "safe",
+    },
+  ],
 };

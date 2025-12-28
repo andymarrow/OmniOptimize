@@ -18,7 +18,6 @@ import TopPagesTable from "./_components/TopPagesTable";
 import DemographicsCard from "./_components/DemographicsCard";
 import HeatmapCard from "./_components/HeatmapCard";
 import MetricsGrid from "./_components/MetricsGrid";
-import DeepInsightsModal from "./_components/DeepInsightsModal";
 
 // Skeleton & Error
 import { AnalyticsDashboardSkeleton } from "@/components/skeleton/dashboardSkeletons";
@@ -48,7 +47,6 @@ export default function AnalyticsPage() {
   const { activeProject } = useProject();
 
   // State
-  const [showInsights, setShowInsights] = useState(false);
   const [trafficData, setTrafficData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -167,7 +165,7 @@ export default function AnalyticsPage() {
 
           {/* Deep Insights Button */}
           <Button
-            onClick={() => setShowInsights(true)}
+            onClick={() => router.push("/dashboard/deep-insight")}
             className="bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white shadow-lg shadow-brand-500/20 border-0"
           >
             <Sparkles className="w-4 h-4 mr-2" />
@@ -223,12 +221,6 @@ export default function AnalyticsPage() {
           </div>
         </>
       )}
-
-      {/* The Modal */}
-      <DeepInsightsModal
-        isOpen={showInsights}
-        onClose={() => setShowInsights(false)}
-      />
     </div>
   );
 }
