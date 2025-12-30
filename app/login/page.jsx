@@ -82,7 +82,7 @@ export default function AuthPage() {
     } 
   };
 
-  // --- HANDLE SIGN UP ---
+  // --- HANDLE SIGN UPP ---
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (!isSignUpLoaded) return;
