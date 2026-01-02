@@ -1,3 +1,10 @@
+import nextra from "nextra";
+
+const withNextra = nextra({
+  contentDirBasePath: '/docd',
+  defaultShowCopyCode: true,
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -19,4 +26,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextra(nextConfig);

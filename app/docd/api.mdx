@@ -1,0 +1,32 @@
+# API Reference
+
+Complete API documentation for the OmniOptimize SDK.
+
+## Core Methods
+
+### initialize()
+
+Initialize the SDK with your configuration.
+
+```javascript
+import { OmniOptimize } from "@omnisdk/core";
+
+const omni = new OmniOptimize({
+  apiKey: "your-api-key",
+  region: "us-east-1",
+});
+```
+
+### connect()
+
+Connect to the service.
+
+```javascript
+await omni.connect();
+```
+
+## Events
+
+- `onConnect` - Fired when connected
+- `onDisconnect` - Fired when disconnected
+- `onError` - Fired when an error occurs
