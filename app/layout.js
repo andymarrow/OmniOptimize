@@ -1,6 +1,8 @@
 // File: app/layout.js
 import { Inter, Playfair_Display } from "next/font/google";
+
 import "./globals.css";
+
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 import ProgressBar from "@/components/ProgressBar";

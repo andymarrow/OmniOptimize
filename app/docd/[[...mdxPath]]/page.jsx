@@ -1,23 +1,27 @@
-import Index from "../index.mdx";
-import Guides from "../guides.mdx";
-import Api from "../api.mdx";
-import About from "../about.mdx";
+import { generateStaticParamsFor, importPage } from 'nextra/pages'
+import { useMDXComponents as getMDXComponents } from '../../../mdx-components'
 
-const pages = {
-  index: Index,
-  guides: Guides,
-  api: Api,
-  about: About,
-};
+export const generateStaticParams = generateStaticParamsFor('mdxPath')
 
-export const metadata = {
-  title: "Omni SDK Docs",
-  description: "Omni SDK Documentation",
-};
+export async function generateMetadata(props) {
+  const params = await props.params
+  const { metadata } = await importPage(params.mdxPath)
+  return metadata
+}
 
-export default function Page({ params }) {
-  const pageKey = params.mdxPath?.[0] || "index";
-  const MDXComponent = pages[pageKey] || Index;
+const Wrapper = getMDXComponents().wrapper
 
-  return <MDXComponent />;
+export default async function Page(props) {
+  const params = await props.params
+  const {
+    default: MDXContent,
+    toc,
+    metadata,
+    sourceCode
+  } = await importPage(params.mdxPath)
+  return (
+    <Wrapper toc={toc} metadata={metadata} sourceCode={sourceCode}>
+      <MDXContent {...props} params={params} />
+    </Wrapper>
+  )
 }
