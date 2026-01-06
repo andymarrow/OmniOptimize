@@ -1,0 +1,83 @@
+/* Custom styles for docs - scoped with module CSS */
+
+.docsContainer {
+  color-scheme: light dark;
+}
+
+.navbarBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbarLogo {
+  width: 28px;
+  height: 28px;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgb(5, 150, 105), rgb(52, 211, 153));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.navbarText {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.navbarSubtext {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  line-height: 1;
+}
+
+.navbarTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.footerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.footerLinks {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footerLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.footerLink:hover {
+  opacity: 0.8;
+}
+
+/* Nextra accent color customization */
+.docsContainer {
+  --nextra-primary-hue: 162deg;
+  --nextra-primary-saturation: 95%;
+  --nextra-primary-lightness: 31%;
+}
+
+.footerBrand {
+  font-weight: 600;
+}
+
+.footerCopy {
+  margin-left: 0.5rem;
+  opacity: 0.7;
+}
