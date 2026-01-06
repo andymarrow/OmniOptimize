@@ -7,10 +7,10 @@ import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 // Import tab components from shared location
-import { SessionReplayTab } from "@/app/dashboard/_components/insights/SessionReplayTab";
-import { FunnelTab } from "@/app/dashboard/_components/insights/FunnelTab";
-import { CohortTab } from "@/app/dashboard/_components/insights/CohortTab";
-import { SearchTab } from "@/app/dashboard/_components/insights/SearchTab";
+import { SessionReplayTab } from "@/app/(main)/dashboard/_components/insights/SessionReplayTab";
+import { FunnelTab } from "@/app/(main)/dashboard/_components/insights/FunnelTab";
+import { CohortTab } from "@/app/(main)/dashboard/_components/insights/CohortTab";
+import { SearchTab } from "@/app/(main)/dashboard/_components/insights/SearchTab";
 
 // Project context
 import { useProject } from "@/app/_context/ProjectContext";
