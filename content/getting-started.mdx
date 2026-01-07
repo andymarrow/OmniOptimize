@@ -1,0 +1,145 @@
+import { Callout, Tabs } from "nextra/components";
+
+# Getting Started
+
+Install the SDK and initialize it in your application.
+
+## Installation
+
+<Tabs items={["npm", "yarn", "pnpm"]}>
+  <Tabs.Tab>```bash npm install @omni-analytics/sdk ```</Tabs.Tab>
+  <Tabs.Tab>```bash yarn add @omni-analytics/sdk ```</Tabs.Tab>
+  <Tabs.Tab>```bash pnpm add @omni-analytics/sdk ```</Tabs.Tab>
+</Tabs>
+
+## Initialize the SDK
+
+Call `initializeSDK()` as early as possible in your application. For Next.js and React apps, this is typically in your root layout or app entry point.
+
+```ts
+import { initializeSDK } from "@omni-analytics/sdk";
+
+initializeSDK({
+  projectId: "<your-project-id>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  batchSize: 30,
+  batchTimeout: 2000,
+  replay: {
+    enabled: true,
+  },
+});
+```
+
+### Configuration parameters
+
+| Parameter        | Type      | Default  | Description                                   |
+| ---------------- | --------- | -------- | --------------------------------------------- |
+| `projectId`      | `string`  | required | Your Omni Analytics project ID                |
+| `endpoint`       | `string`  | required | Backend endpoint for event ingestion          |
+| `batchSize`      | `number`  | `30`     | Events to batch before sending                |
+| `batchTimeout`   | `number`  | `2000`   | Milliseconds before flushing incomplete batch |
+| `replay.enabled` | `boolean` | `true`   | Enable session replay recording               |
+| `debug`          | `boolean` | `true`   | Enable debug mode logging                     |
+
+## Next.js (App Router)
+
+Add initialization to your root layout:
+
+```ts
+// app/layout.ts
+import { initializeSDK } from "@omni-analytics/sdk";
+
+initializeSDK({
+  projectId: "<your-project-id>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  replay: {
+    enabled: true,
+  },
+});
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+## React SPA
+
+Initialize at the entry point:
+
+```ts
+// main.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { initializeSDK } from "@omni-analytics/sdk";
+import App from "./App";
+
+initializeSDK({
+  projectId: "<your-project-id>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  replay: {
+    enabled: true,
+  },
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+## Verify initialization
+
+<Callout type="info">
+
+Once initialized, Omni Analytics will begin automatically tracking events. You should see:
+
+- Page view events when the page loads
+- Click events when users interact with the page
+- Session start events
+
+Check your analytics dashboard to confirm events are arriving.
+
+</Callout>
+
+## Troubleshooting
+
+<Callout type="warning">
+**No events are appearing?**
+
+- Verify `projectId` and `endpoint` are correct
+- Check browser console for errors
+- Ensure the SDK is initialized before the DOM is ready
+- Confirm your ad blocker isn't blocking analytics requests
+
+</Callout>
+
+### Events are batched slowly
+
+Adjust `batchSize` and `batchTimeout` to control when events are sent:
+
+```ts
+initializeSDK({
+  projectId: "<your-project-id>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  batchSize: 10, // Send after 10 events
+  batchTimeout: 1000, // Or after 1 second
+  replay: {
+    enabled: true,
+  },
+});
+```
+
+Lower values send events more frequently but use more bandwidth. Higher values batch more efficiently but have higher latency.
+
+---
+
+> **Beta:** This SDK is actively developed. If you encounter issues, please report them.

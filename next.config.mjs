@@ -1,6 +1,6 @@
 import nextra from "nextra";
 const withNextra = nextra({
-  contentDirBasePath: "/docd",
+  contentDirBasePath: "/docs",
   defaultShowCopyCode: true,
 });
 

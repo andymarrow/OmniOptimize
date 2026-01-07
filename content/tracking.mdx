@@ -1,0 +1,133 @@
+import { Callout } from "nextra/components";
+
+# Automatic Tracking
+
+Omni Analytics automatically captures events after initialization. No additional code required.
+
+## What is tracked
+
+**Page Views** — Every navigation and route change is automatically recorded with URL, title, and referrer.
+
+**Clicks** — All clicks on interactive elements are captured with selector, text, and coordinates.
+
+**Sessions** — User sessions are automatically tracked (anonymous by default).
+
+**Page Dimensions** — Viewport size, page height, and device info.
+
+### Page views
+
+Every time a user navigates to a new page or URL changes, a page view event is recorded.
+
+- **Captured for:** Traditional page navigation and SPA route changes
+- **Data collected:** URL, page title, referrer, timestamp
+- **Automatic:** Happens on page load and all subsequent navigation events
+
+### Clicks
+
+Every click on interactive elements is tracked with context.
+
+- **Captured for:** Buttons, links, form inputs, custom elements
+- **Data collected:**
+  - Element selector (CSS path)
+  - Clicked element tag (e.g., `button`, `div`)
+  - Click coordinates (X, Y)
+  - Page URL and viewport size
+  - Timestamp
+
+- **Example captured event:**
+  ```json
+  {
+    "type": "click",
+    "selector": "button.submit",
+    "elementTag": "button",
+    "x": 245,
+    "y": 120,
+    "url": "https://example.com/form",
+    "timestamp": 1704620400000
+  }
+  ```
+
+### Sessions
+
+User sessions are automatically created and tracked.
+
+- **Session start:** When a user first arrives at your site
+- **Session continuation:** Activity within 30 minutes extends the session
+- **Session end:** Inactivity for 30 minutes or user leaves the site
+- **Data collected:**
+  - Unique session ID
+  - User identifier (if available)
+  - Session duration
+  - Page count in session
+  - Browser and device info
+
+## SPA navigation tracking
+
+For single-page applications (Next.js, React Router, etc.), navigation is automatically detected:
+
+```ts
+// Next.js App Router — tracked automatically
+// app/page.tsx
+export default function Home() {
+  return <h1>Home</h1>;
+}
+
+// app/about/page.tsx
+export default function About() {
+  return <h1>About</h1>;
+}
+```
+
+Each route transition triggers a new page view event.
+
+## What is NOT tracked
+
+Omni Analytics **does not**:
+
+- **Capture form input values** — passwords, emails etc. are never logged
+- **Perform keystroke logging** — individual keystrokes are not recorded
+
+These restrictions help protect user privacy by default.
+
+## Event batching
+
+Events are automatically batched and sent to the backend:
+
+- **Default batch size:** 30 events
+- **Default timeout:** 2000ms
+
+When either limit is reached, events are flushed to the server.
+
+Configure batching in `initializeSDK()`:
+
+```ts
+initializeSDK({
+  projectId: "<projectId>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  batchSize: 50, // Larger batches = lower bandwidth
+  batchTimeout: 5000, // Wait before sending
+  replay: {
+    enabled: true,
+  },
+});
+```
+
+## Session replay
+
+If enabled (default), Omni Analytics records an rrweb replay of user sessions:
+
+```ts
+initializeSDK({
+  projectId: "<projectId>",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  replay: {
+    enabled: true, // Record sessions
+  },
+});
+```
+
+Replay data allows you to watch user interactions and debug issues.
+
+---
+
+> **Status:** Automatic tracking is stable. Event schemas may evolve with new features.
