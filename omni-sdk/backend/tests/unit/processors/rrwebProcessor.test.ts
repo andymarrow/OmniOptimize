@@ -1,5 +1,5 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
-import type { ClickEventData } from "../../../src/types";
+import type { RrwebEventData } from "../../../src/types";
 
 // 1. Mock DB client to prevent connection attempt and env check
 mock.module("../../../src/db/client", () => ({
@@ -7,21 +7,18 @@ mock.module("../../../src/db/client", () => ({
 }));
 
 // 2. Mock repositories
-// We define the mock functions here so we can reference them in expectations
-const mockRecordClick = mock(() => Promise.resolve());
+const mockInsertRrwebEvent = mock(() => Promise.resolve());
 const mockUpsertSession = mock(() => Promise.resolve());
 const mockInsertEvent = mock(() => Promise.resolve());
 const mockUpsertUserFirstSeen = mock(() => Promise.resolve());
 const mockUpsertUserDailyActivity = mock(() => Promise.resolve());
 
 mock.module("../../../src/repositories", () => ({
-    heatmapRepository: {
-        recordClick: mockRecordClick,
-    },
-    // Mock other repositories to prevent "Export named ... not found" errors
     rrwebRepository: {
-        insertRrwebEvent: mock(() => Promise.resolve()),
+        insertRrwebEvent: mockInsertRrwebEvent,
     },
+    // Required to satisfy other imports if shared
+    heatmapRepository: {},
     sessionRepository: {
         upsertSession: mockUpsertSession,
     },
@@ -32,64 +29,58 @@ mock.module("../../../src/repositories", () => ({
         upsertUserFirstSeen: mockUpsertUserFirstSeen,
         upsertUserDailyActivity: mockUpsertUserDailyActivity,
     },
-    // Add other missing exports if needed by other tests running in the same context
-    trafficAnalyticsRepository: {},
-    overviewAnalyticsRepository: {},
-    topPagesRepository: {},
-    retentionRepository: {},
 }));
 
-describe("ClickProcessor", () => {
+describe("RrwebProcessor", () => {
     beforeEach(() => {
-        mockRecordClick.mockClear();
+        mockInsertRrwebEvent.mockClear();
         mockUpsertSession.mockClear();
         mockInsertEvent.mockClear();
         mockUpsertUserFirstSeen.mockClear();
         mockUpsertUserDailyActivity.mockClear();
     });
 
-    test("processClickEvent should record click and process base event", async () => {
+    test("processRrwebEvent should record event and process base event", async () => {
         // Dynamic import to ensure mocks are applied
-        const { processClickEvent } = await import("../../../src/processors/ClickProcessor");
+        const { processRrwebEvent } = await import("../../../src/processors/RrwebProcessor");
 
-        const mockEvent: ClickEventData = {
-            type: "click",
-            eventId: "evt_123",
+        const mockEvent: RrwebEventData = {
+            type: "rrweb",
+            eventId: "evt_rr_456",
             projectId: "proj_abc",
             sessionId: "sess_xyz",
+            replayId: "replay_789",
             clientId: "client_1",
             userId: "user_1",
             timestamp: Date.now(),
-            url: "http://example.com/page",
+            url: "http://example.com/app",
             referrer: "http://google.com",
+            schemaVersion: "v1",
+            rrwebPayload: {
+                type: 3,
+                data: { tag: "div" },
+                timestamp: Date.now(),
+            },
             pageDimensions: { w: 1024, h: 768 },
             viewport: { w: 1024, h: 768 },
-            pageX: 100,
-            pageY: 200,
-            xNorm: 0.1,
-            yNorm: 0.25,
-            selector: "button#submit",
-            tagName: "BUTTON",
-            screenClass: "desktop",
         };
 
-        await processClickEvent(mockEvent, "US", "Desktop");
+        await processRrwebEvent(mockEvent, "US", "Desktop");
 
-        // 1. Verify Heatmap Recording
-        expect(mockRecordClick).toHaveBeenCalledTimes(1);
-        expect(mockRecordClick).toHaveBeenCalledWith({
+        // 1. Verify Rrweb Event Insert
+        expect(mockInsertRrwebEvent).toHaveBeenCalledTimes(1);
+        expect(mockInsertRrwebEvent).toHaveBeenCalledWith({
+            eventId: "evt_rr_456",
             projectId: "proj_abc",
             sessionId: "sess_xyz",
-            url: "http://example.com/page",
-            xNorm: 0.1,
-            yNorm: 0.25,
-            pageX: 100,
-            pageY: 200,
-            selector: "button#submit",
-            tagName: "BUTTON",
-            elementTextHash: undefined,
-            screenClass: "desktop",
-            layoutHash: undefined,
+            replayId: "replay_789",
+            clientId: "client_1",
+            userId: "user_1",
+            timestamp: expect.any(Date),
+            url: "http://example.com/app",
+            referrer: "http://google.com",
+            rrwebPayload: mockEvent.rrwebPayload,
+            schemaVersion: "v1",
             pageWidth: 1024,
             pageHeight: 768,
             viewportWidth: 1024,
@@ -103,15 +94,15 @@ describe("ClickProcessor", () => {
             projectId: "proj_abc",
             clientId: "client_1",
             userId: "user_1",
-            location: "US", // Passed explicitly
-            device: "Desktop", // Passed explicitly
+            location: "US",
+            device: "Desktop",
         });
 
         // 3. Verify Event Insert
         expect(mockInsertEvent).toHaveBeenCalledTimes(1);
         expect(mockInsertEvent).toHaveBeenCalledWith(expect.objectContaining({
-            eventId: "evt_123",
-            type: "click",
+            eventId: "evt_rr_456",
+            type: "rrweb",
         }));
 
         // 4. Verify Retention Tracking

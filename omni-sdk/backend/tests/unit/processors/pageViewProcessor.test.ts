@@ -23,6 +23,13 @@ mock.module("../../../src/repositories", () => ({
         upsertUserFirstSeen: mockUpsertUserFirstSeen,
         upsertUserDailyActivity: mockUpsertUserDailyActivity,
     },
+    // Mock other repositories to satisfy shared imports
+    heatmapRepository: {},
+    rrwebRepository: {},
+    trafficAnalyticsRepository: {},
+    overviewAnalyticsRepository: {},
+    topPagesRepository: {},
+    retentionRepository: {},
 }));
 
 describe("PageViewProcessor", () => {
