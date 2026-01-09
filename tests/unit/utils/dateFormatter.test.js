@@ -4,7 +4,8 @@ import {
     formatDateDisplay,
     parseISO,
     formatDateRangeDisplay,
-    isValidDateRange
+    isValidDateRange,
+    formatChartLabel
 } from "../../../utils/dateFormatter";
 
 describe("dateFormatter Utility", () => {
@@ -43,6 +44,11 @@ describe("dateFormatter Utility", () => {
     test("isValidDateRange should validate correctly", () => {
         expect(isValidDateRange("2024-01-01", "2024-01-10")).toBe(true);
         expect(isValidDateRange("2024-01-10", "2024-01-01")).toBe(false);
+    });
+
+    test("formatChartLabel should format ISO date to MMM d", () => {
+        expect(formatChartLabel("2023-12-25")).toBe("Dec 25");
+        expect(formatChartLabel("invalid")).toBe("invalid");
     });
 
 });
