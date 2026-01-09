@@ -20,4 +20,23 @@ describe("domSerializer Utility (Logic)", () => {
         });
     });
 
+    describe("truncateDOM", () => {
+        const { truncateDOM } = require("../../../omni-sdk/packages/sdk/src/utils/domSerializer");
+
+        test("should not truncate if within limit", () => {
+            const smallStr = "<html><body>Hello</body></html>";
+            const result = truncateDOM(smallStr, 1000);
+            expect(result.truncated).toBe(false);
+            expect(result.dom).toBe(smallStr);
+        });
+
+        test("should truncate if exceeds limit", () => {
+            const longStr = "a".repeat(100);
+            const result = truncateDOM(longStr, 50);
+            expect(result.truncated).toBe(true);
+            expect(result.dom).toContain("<!-- TRUNCATED -->");
+            expect(result.dom.length).toBeLessThan(longStr.length + "<!-- TRUNCATED -->".length + 5);
+        });
+    });
+
 });
