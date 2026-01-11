@@ -1,11 +1,22 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
+
+// 0. Get a single project by ID
+export const getProject = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+    return project;
+  },
+});
 
 // 1. Get Projects for the logged-in user
 export const getMyProjects = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    
+
     // If not logged in, return empty list (don't throw error for UI queries)
     if (!identity) return [];
 
@@ -87,7 +98,7 @@ export const create = mutation({
         plan: "free",
         createdAt: Date.now(),
       });
-      
+
       // Link User to Team
       await ctx.db.insert("team_members", {
         teamId: newTeamId,
@@ -112,6 +123,7 @@ export const create = mutation({
         scanMode: "diff",
         maskPrivacy: true,
       },
+      pages: [],
       createdAt: Date.now(),
     });
 

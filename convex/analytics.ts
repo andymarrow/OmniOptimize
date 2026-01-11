@@ -278,3 +278,85 @@ export const getSessionById = action({
     return response;
   },
 });
+
+// ============= HEATMAP PAGES =============
+
+export const getHeatmapPages = internalQuery({
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+    return project.pages || [];
+  },
+});
+
+export const addHeatmapPage = mutation({
+  args: {
+    projectId: v.id("projects"),
+    route: v.string(),
+    fullUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+
+    // Check if page already exists
+    const pageExists = (project.pages || []).some(
+      (p: any) => p.route === args.route
+    );
+    if (pageExists) {
+      throw new Error("Page already exists for this route");
+    }
+
+    // Add new page to array
+    const updatedPages = [
+      ...(project.pages || []),
+      {
+        route: args.route,
+        fullUrl: args.fullUrl,
+        isDefault: args.route === "/",
+      },
+    ];
+
+    await ctx.db.patch(args.projectId, {
+      pages: updatedPages,
+    });
+
+    return updatedPages;
+  },
+});
+
+export const fetchHeatmapData = action({
+  args: {
+    projectId: v.id("projects"),
+    fullUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    // Call analytics backend to fetch heatmap data
+    const response = await analyticsFetch(
+      `/heatmaps/${args.projectId}/${encodeURIComponent(args.fullUrl)}`
+    );
+
+    return response;
+  },
+});

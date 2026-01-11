@@ -68,6 +68,7 @@
     "rrweb-player": "^1.0.0-alpha.4",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "visual-heatmap": "^2.2.0",
     "zod": "^3.25.67",
     "zod-prisma-types": "^3.2.4"
   },
