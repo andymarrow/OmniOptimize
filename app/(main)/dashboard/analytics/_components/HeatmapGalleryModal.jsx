@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import HeatmapCanvas from "./HeatmapCanvas";
 import HeatmapSkeleton from "./HeatmapSkeleton";
+import toast from "react-hot-toast";
 
 const HeatmapGalleryModal = ({ isOpen, onClose, projectId }) => {
   const [selectedPageIndex, setSelectedPageIndex] = useState(0);
@@ -107,9 +108,20 @@ const HeatmapGalleryModal = ({ isOpen, onClose, projectId }) => {
       return;
     }
 
-    // Convert file to blob URL
+    // Convert file to blob URL and extract dimensions
     const blobUrl = URL.createObjectURL(file);
-    setBackgroundImage(blobUrl);
+    const img = new Image();
+    img.onload = () => {
+      setBackgroundImage({
+        url: blobUrl,
+        width: img.width,
+        height: img.height,
+      });
+    };
+    img.onerror = () => {
+      toast.error("Failed to load image");
+    };
+    img.src = blobUrl;
   };
 
   // Clear background image

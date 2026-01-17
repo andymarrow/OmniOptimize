@@ -1,81 +1,89 @@
 "use client";
 import React, { useEffect, useRef } from "react";
-import Heatmap from "visual-heatmap";
+import h337 from "heatmap.js";
 
 const HeatmapCanvas = ({ data, page, device, backgroundImage }) => {
   const containerRef = useRef(null);
-  const heatmapInstance = useRef(null);
+  const imageRef = useRef(null);
+  const heatmapRef = useRef(null);
+  const heatmapContainerRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current || !data || !data.grid) return;
 
-    // Clear previous instance
-    if (heatmapInstance.current) {
-      containerRef.current.innerHTML = "";
+    // Determine canvas dimensions based on background image or recorded page size
+    const imageWidth = backgroundImage?.width || data.pageWidth;
+    const imageHeight = backgroundImage?.height || data.pageHeight;
+
+    // Calculate scaling factors to map normalized coordinates to pixel positions
+    // If screenshot size differs from recorded page dimensions, scale proportionally
+    const scaleX = imageWidth / data.pageWidth;
+    const scaleY = imageHeight / data.pageHeight;
+
+    // Clear previous heatmap container if it exists
+    if (heatmapContainerRef.current && heatmapContainerRef.current.parentNode) {
+      heatmapContainerRef.current.parentNode.removeChild(
+        heatmapContainerRef.current,
+      );
+      heatmapContainerRef.current = null;
     }
 
-    // Initialize heatmap
-    const heatmapConfig = {
-      size: 50, //Radius of the data point, in pixels. Default: 20
-      intensity: 1.0,
-      gradient: [
-        {
-          color: [0, 0, 0, 0.0],
-          offset: 0,
-        },
-        {
-          color: [0, 0, 255, 0.32],
-          offset: 0.2,
-        },
-        {
-          color: [0, 255, 0, 0.65],
-          offset: 0.45,
-        },
-        {
-          color: [255, 255, 0, 1.0],
-          offset: 0.85,
-        },
-        {
-          color: [255, 0, 0, 1.0],
-          offset: 1.0,
-        },
-      ],
-    };
+    // Create heatmap container
+    const heatmapWrapper = document.createElement("div");
+    heatmapWrapper.style.position = "absolute";
+    heatmapWrapper.style.top = "0";
+    heatmapWrapper.style.left = "0";
+    heatmapWrapper.style.width = `${imageWidth}px`;
+    heatmapWrapper.style.height = `${imageHeight}px`;
+    heatmapWrapper.style.pointerEvents = "none";
+    heatmapWrapper.style.zIndex = "10";
+    containerRef.current.appendChild(heatmapWrapper);
+    heatmapContainerRef.current = heatmapWrapper;
 
-    // Add background image if provided
-    if (backgroundImage) {
-      heatmapConfig.backgroundImage = {
-        url: backgroundImage,
-        width: data.pageWidth,
-        height: data.pageHeight,
-        x: 0,
-        y: 0,
-      };
-    }
+    // Create heatmap instance with custom gradient (blue → green → yellow → red)
+    heatmapRef.current = h337.create({
+      container: heatmapContainerRef.current,
+      radius: 50,
+      maxOpacity: 0.8,
+      minOpacity: 0,
+      blur: 0.85,
+      gradient: {
+        0.0: "#0000ff",
+        0.2: "#00ffff",
+        0.45: "#00ff00",
+        0.65: "#ffff00",
+        0.85: "#ff8800",
+        1.0: "#ff0000",
+      },
+    });
 
-    heatmapInstance.current = new Heatmap(containerRef.current, heatmapConfig);
+    // Convert backend grid data to heatmap.js format with scaling applied
+    const maxCount = Math.max(...data.grid.map((cell) => cell.count), 1);
 
-    // Convert backend grid data to heatmap points
     const points = data.grid.map((cell) => ({
-      x: cell.xNorm * data.pageWidth,
-      y: cell.yNorm * data.pageHeight,
+      x: Math.round(cell.xNorm * data.pageWidth * scaleX),
+      y: Math.round(cell.yNorm * data.pageHeight * scaleY),
       value: cell.count,
     }));
-    console.log("Heatmap points:", data);
 
-    // Add points to heatmap
-    heatmapInstance.current.renderData(points);
-
-    // Render
-    heatmapInstance.current.render();
+    // Set heatmap data
+    heatmapRef.current.setData({
+      max: maxCount,
+      data: points,
+    });
   }, [data, backgroundImage]);
 
   return (
     <div
+      id="heatmap-container"
       ref={containerRef}
       style={{
-        minWidth: data.pageWidth,
-        minHeight: data.pageHeight,
+        minWidth: backgroundImage?.width
+          ? `${backgroundImage.width}px`
+          : `${data?.pageWidth}px`,
+        minHeight: backgroundImage?.height
+          ? `${backgroundImage.height}px`
+          : `${data?.pageHeight}px`,
         position: "relative",
         backgroundColor: "white",
         borderRadius: device === "mobile" ? "2rem" : "0.5rem",
@@ -83,7 +91,39 @@ const HeatmapCanvas = ({ data, page, device, backgroundImage }) => {
         overflow: "auto",
       }}
       className="dark:bg-slate-900 dark:border-slate-800"
-    />
+    >
+      {backgroundImage?.url ? (
+        <img
+          ref={imageRef}
+          src={backgroundImage.url}
+          alt="Page screenshot"
+          style={{
+            display: "block",
+            width: `${backgroundImage.width}px`,
+            height: `${backgroundImage.height}px`,
+            position: "relative",
+            zIndex: "1",
+          }}
+          onError={(e) =>
+            console.error("Image failed to load:", backgroundImage.url, e)
+          }
+          onLoad={() => console.log("Image loaded successfully")}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#999",
+          }}
+        >
+          No image provided
+        </div>
+      )}
+    </div>
   );
 };
 
