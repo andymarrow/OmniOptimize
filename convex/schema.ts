@@ -29,9 +29,9 @@ export default defineSchema({
     invitedEmail: v.optional(v.string()),
     joinedAt: v.number(),
   })
-  .index("by_team", ["teamId"])
-  .index("by_user", ["userId"])
-  .index("by_team_user", ["teamId", "userId"]),
+    .index("by_team", ["teamId"])
+    .index("by_user", ["userId"])
+    .index("by_team_user", ["teamId", "userId"]),
 
   // 4. PROJECTS
   projects: defineTable({
@@ -39,13 +39,22 @@ export default defineSchema({
     name: v.string(),
     url: v.string(),
     githubRepo: v.optional(v.string()),
-    publishableKey: v.string(), 
+    publishableKey: v.string(),
     secretKey: v.string(),
     settings: v.object({
-        sessionReplay: v.boolean(),
-        scanMode: v.union(v.literal("diff"), v.literal("full")),
-        maskPrivacy: v.boolean(),
+      sessionReplay: v.boolean(),
+      scanMode: v.union(v.literal("diff"), v.literal("full")),
+      maskPrivacy: v.boolean(),
     }),
+    pages: v.optional(
+      v.array(
+        v.object({
+          route: v.string(), // e.g., "/" or "/products"
+          fullUrl: v.string(), // e.g., "https://example.com/products"
+          isDefault: v.boolean(), // true for the root "/" page
+        })
+      )
+    ),
     createdAt: v.number(),
   }).index("by_team", ["teamId"]),
 
@@ -69,7 +78,7 @@ export default defineSchema({
     type: v.string(),
     path: v.string(),
     x: v.optional(v.number()),
-    y: v.optional(v.number()), 
+    y: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_project_type", ["projectId", "type"]),
 
@@ -82,7 +91,8 @@ export default defineSchema({
     message: v.string(),
     riskScore: v.number(),
     aiSummary: v.string(),
-    issues: v.array(v.object({
+    issues: v.array(
+      v.object({
         severity: v.string(),
         file: v.string(),
         line: v.number(),
@@ -90,7 +100,8 @@ export default defineSchema({
         suggestion: v.optional(v.string()),
         fixType: v.optional(v.string()), // Added from your scheduler logic
         fixContent: v.optional(v.string()), // Added from your scheduler logic
-    })),
+      })
+    ),
     createdAt: v.number(),
   }).index("by_project", ["projectId"]),
 
@@ -98,53 +109,69 @@ export default defineSchema({
   seo_scans: defineTable({
     projectId: v.id("projects"),
     url: v.string(), // The specific URL scanned (e.g., "youtube.com" or "wego.com/pricing")
-    
+
     // Mobile Data
-    mobile: v.optional(v.object({
-        status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+    mobile: v.optional(
+      v.object({
+        status: v.union(
+          v.literal("pending"),
+          v.literal("completed"),
+          v.literal("failed")
+        ),
         performanceScore: v.number(),
         scores: v.optional(v.any()),
         metrics: v.any(),
         audits: v.any(),
-        
+
         // 👇 CHANGED: Now storing ID, not raw data
-        filmstripId: v.optional(v.id("_storage")), 
-        
+        filmstripId: v.optional(v.id("_storage")),
+
         screenshotId: v.optional(v.id("_storage")),
         fullJsonId: v.optional(v.id("_storage")),
         updatedAt: v.number(),
-    })),
+      })
+    ),
 
     // Desktop Data (Same Change)
-    desktop: v.optional(v.object({
-        status: v.union(v.literal("pending"), v.literal("completed"), v.literal("failed")),
+    desktop: v.optional(
+      v.object({
+        status: v.union(
+          v.literal("pending"),
+          v.literal("completed"),
+          v.literal("failed")
+        ),
         performanceScore: v.number(),
         scores: v.optional(v.any()),
         metrics: v.any(),
         audits: v.any(),
-        
+
         // 👇 CHANGED
         filmstripId: v.optional(v.id("_storage")),
-        
+
         screenshotId: v.optional(v.id("_storage")),
         fullJsonId: v.optional(v.id("_storage")),
         updatedAt: v.number(),
-    })),
+      })
+    ),
 
     // AI Analysis (Permanent Record)
-    aiAnalysis: v.optional(v.object({
+    aiAnalysis: v.optional(
+      v.object({
         summary: v.string(),
         visuals: v.any(), // Chart data
         roadmap: v.optional(v.any()),
         // 👇 NEW: ML Prediction Storage
-        mlPrediction: v.optional(v.object({
+        mlPrediction: v.optional(
+          v.object({
             category: v.string(), // "Good", "Poor"
             confidence: v.number(),
-            timestamp: v.number()
-        })),
+            timestamp: v.number(),
+          })
+        ),
         createdAt: v.number(),
-    })),
+      })
+    ),
   })
-  .index("by_project", ["projectId"])
-  .index("by_project_url", ["projectId", "url"]), // For the dropdown selector
+    .index("by_project", ["projectId"])
+    .index("by_project_url", ["projectId", "url"]), // For the dropdown selector
 });

@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, MousePointer2 } from "lucide-react";
 import HeatmapGalleryModal from "./HeatmapGalleryModal"; // <--- Import the new modal
 
+import { useProject } from "@/app/_context/ProjectContext";
+
 const HeatmapCard = () => {
+  const { activeProject } = useProject();
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -58,6 +61,7 @@ const HeatmapCard = () => {
       <HeatmapGalleryModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
+        projectId={activeProject._id}
       />
     </>
   );

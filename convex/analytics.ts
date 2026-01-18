@@ -11,7 +11,7 @@ import { internal } from "./_generated/api";
 async function analyticsFetch(
   url: string,
   method: "GET" | "POST" = "GET",
-  options: RequestInit = {}
+  options: RequestInit = {},
 ) {
   const backendUrl = process.env.BACKEND_URL;
   const backendApiKey = process.env.BACKEND_API_KEY;
@@ -249,7 +249,7 @@ export const getSessions = action({
 
     // Call backend API
     const response = await analyticsFetch(
-      `/sessions/projects/${args.projectId}`
+      `/sessions/projects/${args.projectId}`,
     );
     return response;
   },
@@ -275,6 +275,168 @@ export const getSessionById = action({
 
     // Call backend API
     const response = await analyticsFetch(`/sessions/${args.sessionId}`);
+    return response;
+  },
+});
+
+// ============= HEATMAP PAGES =============
+
+export const getHeatmapPages = internalQuery({
+  args: {
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+    return project.pages || [];
+  },
+});
+
+export const addHeatmapPage = mutation({
+  args: {
+    projectId: v.id("projects"),
+    route: v.string(),
+    fullUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+
+    // Check if page already exists
+    const pageExists = (project.pages || []).some(
+      (p: any) => p.route === args.route,
+    );
+    if (pageExists) {
+      throw new Error("Page already exists for this route");
+    }
+
+    // Add new page to array
+    const updatedPages = [
+      ...(project.pages || []),
+      {
+        route: args.route,
+        fullUrl: args.fullUrl,
+        isDefault: args.route === "/",
+      },
+    ];
+
+    await ctx.db.patch(args.projectId, {
+      pages: updatedPages,
+    });
+
+    return updatedPages;
+  },
+});
+
+export const updateHeatmapPage = mutation({
+  args: {
+    projectId: v.id("projects"),
+    index: v.number(),
+    fullUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    const project = await ctx.db.get(args.projectId);
+    if (!project) throw new Error("Project not found");
+
+    const pages = project.pages || [];
+    if (args.index < 0 || args.index >= pages.length) {
+      throw new Error("Invalid page index");
+    }
+
+    // Derive route from full URL
+    let route = "/";
+    try {
+      const urlObj = new URL(args.fullUrl);
+      route = urlObj.pathname || "/";
+    } catch (e) {
+      throw new Error("Invalid URL");
+    }
+
+    const updated = {
+      ...pages[args.index],
+      route,
+      fullUrl: args.fullUrl,
+      isDefault: route === "/",
+    };
+    const updatedPages = pages.map((p: any, i: number) =>
+      i === args.index ? updated : p,
+    );
+
+    await ctx.db.patch(args.projectId, { pages: updatedPages });
+    return updatedPages;
+  },
+});
+
+export const fetchHeatmapData = action({
+  args: {
+    projectId: v.id("projects"),
+    fullUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    // Call analytics backend to fetch heatmap data
+    const response = await analyticsFetch(
+      `/heatmaps/${args.projectId}/${encodeURIComponent(args.fullUrl)}`,
+    );
+
+    return response;
+  },
+});
+
+// Retention Cohorts: GET /analytics/retention
+export const getRetentionCohorts = action({
+  args: {
+    projectId: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    intervals: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    // Verify user has access to this project
+    await ctx.runQuery(internal.analytics.verifyProjectAccess, {
+      clerkId: identity.subject,
+      projectId: args.projectId,
+    });
+
+    // Call analytics backend to fetch retention cohort data
+    const params = new URLSearchParams({
+      projectId: args.projectId,
+      startDate: args.startDate,
+      endDate: args.endDate,
+      intervals: args.intervals,
+    });
+
+    const response = await analyticsFetch(`/analytics/retention?${params}`);
     return response;
   },
 });

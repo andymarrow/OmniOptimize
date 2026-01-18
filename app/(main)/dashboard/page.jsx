@@ -123,7 +123,7 @@ export default function DashboardOverview() {
   // 4. Fetch recent commits (existing functionality)
   const recentCommits = useQuery(
     api.queries.getCommits,
-    activeProject ? { projectId: activeProject._id } : "skip"
+    activeProject ? { projectId: activeProject._id } : "skip",
   );
 
   // 5. Map backend data to card format
@@ -214,7 +214,7 @@ export default function DashboardOverview() {
   const chartData = getChartData();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-foreground">
       {/* 1. Header Section with Date Picker */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -471,7 +471,7 @@ export default function DashboardOverview() {
                             <span>
                               {commit.createdAt
                                 ? new Date(
-                                    commit.createdAt
+                                    commit.createdAt,
                                   ).toLocaleDateString()
                                 : "Just now"}
                             </span>

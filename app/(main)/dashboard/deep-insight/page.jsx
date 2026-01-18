@@ -21,7 +21,7 @@ export default function DeepInsightPage() {
   // Use localStorage to persist tab selection
   const [activeTab, setActiveTab, isLoaded] = useLocalStorage(
     "deepInsight_activeTab",
-    DEFAULT_TAB
+    DEFAULT_TAB,
   );
 
   // Project context
@@ -91,7 +91,7 @@ export default function DeepInsightPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-[#020617]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-[#020617] text-foreground">
       {/* HEADER */}
       <div className="px-4 py-4 sm:px-6 sm:py-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex-shrink-0">
         <div className="flex items-center gap-3">
