@@ -10,32 +10,34 @@ export const metadata = {
 
 export default function DashboardLayout({ children }) {
   return (
-    <ProjectProvider>
-      <div className="flex h-screen bg-slate-50 dark:bg-[#020617] overflow-hidden">
-        {/* DESKTOP SIDEBAR 
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProjectProvider>
+        <div className="flex h-screen bg-slate-50 dark:bg-[#020617] overflow-hidden">
+          {/* DESKTOP SIDEBAR 
                 - hidden by default (mobile)
                 - block on md (desktop)
                 - fixed width 
             */}
-        <aside className="hidden md:block w-64 h-full flex-shrink-0">
-          <DashboardSidebar />
-        </aside>
+          <aside className="hidden md:block w-64 h-full flex-shrink-0">
+            <DashboardSidebar />
+          </aside>
 
-        {/* MAIN CONTENT AREA */}
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
-          <DashboardHeader />
+          {/* MAIN CONTENT AREA */}
+          <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+            <DashboardHeader />
 
-          {/* Scrollable Page Content 
+            {/* Scrollable Page Content 
                   - min-w-0 ensures graphs/tables shrink correctly instead of overflowing 
               */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-            <div className="mx-auto max-w-6xl min-w-0">
-              {/* safely use urlsearch params */}
-              <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-            </div>
-          </main>
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+              <div className="mx-auto max-w-6xl min-w-0">
+                {/* safely use urlsearch params */}
+                <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
-    </ProjectProvider>
+      </ProjectProvider>
+    </Suspense>
   );
 }
