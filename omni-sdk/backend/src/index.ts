@@ -26,16 +26,14 @@ app.use("*", honoLogger());
 app.use(
   "*",
   cors({
-    origin: (
-      process.env.ALLOWED_ORIGINS ||
-      "http://localhost:3000,http://localhost:5173,http://localhost:5174"
-    ).split(","),
+    origin: "*",
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: false, // must be false if origin is "*"
     maxAge: 86400,
   })
 );
+
 
 // Global state for queue
 let queue: Awaited<ReturnType<typeof createIngestionQueue>> | null = null;
