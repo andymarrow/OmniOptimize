@@ -5,6 +5,7 @@
  */
 
 import type { IPlugin, PluginContext } from "../../types";
+import { CAPTURE_CONSTANTS } from "../../constants/CaptureConstants";
 
 /**
  * Options for click tracking plugin
@@ -55,6 +56,11 @@ export class ClickTrackingPlugin implements IPlugin {
       throttleMs: 100,
       maxTextLength: 100,
       debug: false,
+      // Add default no-capture class to exclude selectors
+      excludeSelectors: [
+        `.${CAPTURE_CONSTANTS.NO_CAPTURE_CLASS}`,
+        ...(options.excludeSelectors || []),
+      ],
       ...options,
     };
   }

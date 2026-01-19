@@ -8,7 +8,6 @@ import "./index.css";
 
 // Initialize SDK once at app startup
 const { tracker } = initializeSDK({
-  enabled: false,
   projectId: "local-example-app",
   endpoint: "http://localhost:5000/ingest",
   debug: true,
@@ -19,7 +18,6 @@ const { tracker } = initializeSDK({
     debug: true,
   },
 });
-setTimeout(enableSDK, 10000);
 console.log("✅ SDK Initialized:", { tracker });
 
 ReactDOM.createRoot(document.getElementById("root")).render(

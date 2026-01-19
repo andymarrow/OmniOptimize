@@ -14,6 +14,8 @@
  *   rrwebManager.startRecording();
  */
 
+import { CAPTURE_CONSTANTS } from "../constants/CaptureConstants";
+
 type RrwebEventCallback = (event: any) => void;
 
 /**
@@ -226,28 +228,35 @@ export class RrwebManager {
     const maskInputOptions: Record<string, boolean> = {
       password: true,
       hidden: true,
-      checkbox: false,
-      radio: false,
-      color: false,
-      date: false,
-      "datetime-local": false,
-      email: false,
-      month: false,
-      number: false,
-      range: false,
-      tel: false,
-      text: false,
-      textarea: false,
-      time: false,
-      url: false,
-      week: false,
+      checkbox: true,
+      radio: true,
+      color: true,
+      date: true,
+      "datetime-local": true,
+      email: true,
+      month: true,
+      number: true,
+      range: true,
+      tel: true,
+      text: true,
+      textarea: true,
+      time: true,
+      url: true,
+      week: true,
       ...config.maskInputOptions,
     };
 
     const options: Record<string, any> = {
       maskInputOptions,
+      maskAllInputs: true,
       recordCanvas: false, // Disable canvas recording for performance
       recordCrossOriginIframes: false,
+
+      // Use global capture constants for blocking, ignoring, and masking
+      blockClass: CAPTURE_CONSTANTS.NO_CAPTURE_CLASS,
+      ignoreClass: CAPTURE_CONSTANTS.IGNORE_CLASS,
+      maskTextClass: CAPTURE_CONSTANTS.MASK_CLASS,
+
       sampling: {
         // Adaptive sampling for performance
         mousemove: true,
@@ -257,9 +266,15 @@ export class RrwebManager {
       },
     };
 
-    // Add block selectors
+    // Add block selectors - always include no-capture class
+    const defaultBlockSelectors = [`.${CAPTURE_CONSTANTS.NO_CAPTURE_CLASS}`];
     if (config.blockSelectors && config.blockSelectors.length > 0) {
-      options.blockSelectors = config.blockSelectors;
+      options.blockSelectors = [
+        ...defaultBlockSelectors,
+        ...config.blockSelectors,
+      ];
+    } else {
+      options.blockSelectors = defaultBlockSelectors;
     }
 
     // Add mask selectors
