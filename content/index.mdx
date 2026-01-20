@@ -1,52 +1,31 @@
 # Omni Analytics SDK
 
-**Zero-instrumentation website analytics. Initialize once. Works automatically.**
+**Privacy-aware analytics that works automatically.**
 
-Omni Analytics is a drop-in SDK for modern web applications. Forget manual event tracking—just initialize it and it automatically captures page views, clicks, user sessions, and navigation events. No dashboards, no complexity, no awkward moment when you realize you forgot to instrument a page.
+Omni Analytics tracks user behavior on your website without manual instrumentation. After one initialization call, it automatically captures page views, clicks, sessions, and screen recordings. You control what gets tracked and can pause tracking anytime.
 
-## What it does
+## What it tracks
 
-After a single `initializeSDK()` call, Omni Analytics automatically tracks:
+Once initialized, the SDK automatically collects:
 
-- **Page views** — every navigation or route change
-- **Clicks** — element selectors, coordinates, and element info
-- **Sessions** — automatic user sessions (anonymous by default)
-- **SPA navigation** — client-side routing (Next.js, React Router, etc.)
+- **Page views** — every navigation and route change
+- **Clicks** — what users interact with, where they click
+- **Sessions** — anonymous user sessions with replay recordings
+- **SPA navigation** — client-side routing (Next.js, React Router)
 
-No event API calls. No instrumentation scattered through your code. It works.
+No manual event calls needed. It just works.
 
-## Why use it
+## Privacy controls
 
-- **One-line setup** — call `initializeSDK()` and you're done
-- **Zero manual work** — automatic tracking handles most use cases
-- **Modern frameworks** — built for React, Next.js, and SPAs
-- **Simple API** — when you do need custom events, it's straightforward
+You decide what gets tracked:
 
-## Quick start
+- **Disable in development** — turn off tracking during local development
+- **Protect sensitive elements** — exclude forms, payments, or auth pages from tracking
+- **Mask sensitive text** — hide emails, addresses, or personal data in recordings
 
-```ts
-import { initializeSDK } from "@omni-analytics/sdk";
-
-initializeSDK({
-  projectId: "<projectid>",
-  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  batchSize: 30,
-  batchTimeout: 2000,
-  replay: {
-    enabled: true,
-  },
-});
-```
-
-That's it. Events are now being collected.
-
-> you can get your project id from the settings page.
+Tracking respects user privacy by default and gives you fine-grained control.
 
 ## Next steps
 
-- **[Getting Started](docs/getting-started)** — installation and first setup
-- **[Automatic Tracking](docs/tracking)** — what Omni Analytics captures by default
-
----
-
-> **Status:** Omni Analytics is in **active beta**. Core features are stable, but APIs may evolve as we gather feedback.
+- **[Getting Started](/docs/getting-started)** — install and initialize the SDK
+- **[Controlling Tracking](/docs/tracking)** — pause tracking and protect sensitive data

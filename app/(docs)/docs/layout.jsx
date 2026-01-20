@@ -22,7 +22,7 @@ export const metadata = {
 
 const banner = (
   <Banner storageKey="omni-sdk-banner">
-    🎉 OmniOptimize SDK v0.2.0 released - Check out the new features!
+    🎉 OmniOptimize SDK v0.3.0 released - Check out the new features!
   </Banner>
 );
 

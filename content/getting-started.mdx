@@ -2,7 +2,7 @@ import { Callout, Tabs } from "nextra/components";
 
 # Getting Started
 
-Install the SDK and initialize it in your application.
+Install the SDK and initialize it in your app.
 
 ## Installation
 
@@ -12,49 +12,54 @@ Install the SDK and initialize it in your application.
   <Tabs.Tab>```bash pnpm add @omni-analytics/sdk ```</Tabs.Tab>
 </Tabs>
 
-## Initialize the SDK
+## Basic setup
 
-Call `initializeSDK()` as early as possible in your application. For Next.js and React apps, this is typically in your root layout or app entry point.
+Call `initializeSDK()` once, as early as possible in your app.
 
 ```ts
 import { initializeSDK } from "@omni-analytics/sdk";
 
 initializeSDK({
-  projectId: "<your-project-id>",
+  projectId: "your-project-id",
   endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  batchSize: 30,
-  batchTimeout: 2000,
-  replay: {
-    enabled: true,
-  },
+  writeKey: "omni-public-write-key-here", // Required — get from dashboard
 });
 ```
 
-### Configuration parameters
+That's it. The SDK will now track page views, clicks, and sessions automatically.
 
-| Parameter        | Type      | Default  | Description                                   |
-| ---------------- | --------- | -------- | --------------------------------------------- |
-| `projectId`      | `string`  | required | Your Omni Analytics project ID                |
-| `endpoint`       | `string`  | required | Backend endpoint for event ingestion          |
-| `batchSize`      | `number`  | `30`     | Events to batch before sending                |
-| `batchTimeout`   | `number`  | `2000`   | Milliseconds before flushing incomplete batch |
-| `replay.enabled` | `boolean` | `true`   | Enable session replay recording               |
-| `debug`          | `boolean` | `true`   | Enable debug mode logging                     |
+<Callout type="info">
+  The `writeKey` authenticates your events. Get it from your project settings.
+</Callout>
+
+## Disable tracking in development
+
+You probably don't want to track local development activity. Disable it:
+
+```ts
+initializeSDK({
+  projectId: "your-project-id",
+  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
+  writeKey: "omni-public-write-key-here",
+  enabled: process.env.NODE_ENV === "production", // Only track in production
+});
+```
+
+When `enabled: false`, the SDK stops all tracking—no clicks, no page views, no recordings.
 
 ## Next.js (App Router)
 
-Add initialization to your root layout:
+Initialize in your root layout:
 
 ```ts
-// app/layout.ts
+// app/layout.tsx
 import { initializeSDK } from "@omni-analytics/sdk";
 
 initializeSDK({
-  projectId: "<your-project-id>",
+  projectId: "your-project-id",
   endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  replay: {
-    enabled: true,
-  },
+  writeKey: "omni-public-write-key-here",
+  enabled: process.env.NODE_ENV === "production",
 });
 
 export default function RootLayout({
@@ -72,7 +77,7 @@ export default function RootLayout({
 
 ## React SPA
 
-Initialize at the entry point:
+Initialize at your app entry point:
 
 ```ts
 // main.tsx
@@ -82,11 +87,9 @@ import { initializeSDK } from "@omni-analytics/sdk";
 import App from "./App";
 
 initializeSDK({
-  projectId: "<your-project-id>",
+  projectId: "your-project-id",
   endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  replay: {
-    enabled: true,
-  },
+  writeKey: "omni-public-write-key-here",
 });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -96,50 +99,28 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 ```
 
-## Verify initialization
+## Configuration options
+
+| Parameter        | Type      | Required | Default | Description                                           |
+| ---------------- | --------- | -------- | ------- | ----------------------------------------------------- |
+| `projectId`      | `string`  | Yes      | —       | Your project ID (from dashboard)                      |
+| `endpoint`       | `string`  | Yes      | —       | Event ingestion endpoint                              |
+| `writeKey`       | `string`  | Yes      | —       | Authentication key (from dashboard)                   |
+| `enabled`        | `boolean` | No       | `true`  | Enable or disable tracking                            |
+| `batchSize`      | `number`  | No       | `30`    | Number of events to batch before sending              |
+| `batchTimeout`   | `number`  | No       | `2000`  | Milliseconds to wait before flushing incomplete batch |
+| `replay.enabled` | `boolean` | No       | `true`  | Enable session replay recordings                      |
+
+## Verify it's working
 
 <Callout type="info">
-
-Once initialized, Omni Analytics will begin automatically tracking events. You should see:
-
-- Page view events when the page loads
-- Click events when users interact with the page
-- Session start events
-
-Check your analytics dashboard to confirm events are arriving.
-
+  After initialization, check your browser's network tab. You should see
+  requests to your `endpoint` with batched events.
 </Callout>
 
-## Troubleshooting
+If events aren't appearing:
 
-<Callout type="warning">
-**No events are appearing?**
-
-- Verify `projectId` and `endpoint` are correct
-- Check browser console for errors
-- Ensure the SDK is initialized before the DOM is ready
-- Confirm your ad blocker isn't blocking analytics requests
-
-</Callout>
-
-### Events are batched slowly
-
-Adjust `batchSize` and `batchTimeout` to control when events are sent:
-
-```ts
-initializeSDK({
-  projectId: "<your-project-id>",
-  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  batchSize: 10, // Send after 10 events
-  batchTimeout: 1000, // Or after 1 second
-  replay: {
-    enabled: true,
-  },
-});
-```
-
-Lower values send events more frequently but use more bandwidth. Higher values batch more efficiently but have higher latency.
-
----
-
-> **Beta:** This SDK is actively developed. If you encounter issues, please report them.
+- Double-check your `projectId`, `endpoint`, and `writeKey`
+- Make sure `enabled` isn't set to `false`
+- Check the browser console for errors
+- Disable any ad blockers that might block analytics requests

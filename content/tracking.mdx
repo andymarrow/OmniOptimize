@@ -1,133 +1,142 @@
 import { Callout } from "nextra/components";
 
-# Automatic Tracking
+# Controlling What Gets Tracked
 
-Omni Analytics automatically captures events after initialization. No additional code required.
+The SDK tracks automatically, but you control what gets captured.
 
-## What is tracked
+## Pause and resume tracking
 
-**Page Views** — Every navigation and route change is automatically recorded with URL, title, and referrer.
-
-**Clicks** — All clicks on interactive elements are captured with selector, text, and coordinates.
-
-**Sessions** — User sessions are automatically tracked (anonymous by default).
-
-**Page Dimensions** — Viewport size, page height, and device info.
-
-### Page views
-
-Every time a user navigates to a new page or URL changes, a page view event is recorded.
-
-- **Captured for:** Traditional page navigation and SPA route changes
-- **Data collected:** URL, page title, referrer, timestamp
-- **Automatic:** Happens on page load and all subsequent navigation events
-
-### Clicks
-
-Every click on interactive elements is tracked with context.
-
-- **Captured for:** Buttons, links, form inputs, custom elements
-- **Data collected:**
-  - Element selector (CSS path)
-  - Clicked element tag (e.g., `button`, `div`)
-  - Click coordinates (X, Y)
-  - Page URL and viewport size
-  - Timestamp
-
-- **Example captured event:**
-  ```json
-  {
-    "type": "click",
-    "selector": "button.submit",
-    "elementTag": "button",
-    "x": 245,
-    "y": 120,
-    "url": "https://example.com/form",
-    "timestamp": 1704620400000
-  }
-  ```
-
-### Sessions
-
-User sessions are automatically created and tracked.
-
-- **Session start:** When a user first arrives at your site
-- **Session continuation:** Activity within 30 minutes extends the session
-- **Session end:** Inactivity for 30 minutes or user leaves the site
-- **Data collected:**
-  - Unique session ID
-  - User identifier (if available)
-  - Session duration
-  - Page count in session
-  - Browser and device info
-
-## SPA navigation tracking
-
-For single-page applications (Next.js, React Router, etc.), navigation is automatically detected:
+You can turn tracking on or off at any time:
 
 ```ts
-// Next.js App Router — tracked automatically
-// app/page.tsx
-export default function Home() {
-  return <h1>Home</h1>;
-}
+import { disableSDK, enableSDK } from "@omni-analytics/sdk";
 
-// app/about/page.tsx
-export default function About() {
-  return <h1>About</h1>;
-}
+// Stop all tracking
+disableSDK();
+
+// Resume tracking
+enableSDK();
 ```
 
-Each route transition triggers a new page view event.
+When disabled, the SDK stops collecting **everything**—no clicks, no page views, no session recordings.
 
-## What is NOT tracked
+### When to disable tracking
 
-Omni Analytics **does not**:
+Common use cases:
 
-- **Capture form input values** — passwords, emails etc. are never logged
-- **Perform keystroke logging** — individual keystrokes are not recorded
+- **During local development** — avoid polluting analytics with test data
+- **Internal users** — disable tracking for admins or support staff
+- **Sensitive workflows** — pause tracking during checkout or authentication
 
-These restrictions help protect user privacy by default.
-
-## Event batching
-
-Events are automatically batched and sent to the backend:
-
-- **Default batch size:** 30 events
-- **Default timeout:** 2000ms
-
-When either limit is reached, events are flushed to the server.
-
-Configure batching in `initializeSDK()`:
+You can also disable tracking at initialization:
 
 ```ts
 initializeSDK({
-  projectId: "<projectId>",
+  projectId: "your-project-id",
   endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  batchSize: 50, // Larger batches = lower bandwidth
-  batchTimeout: 5000, // Wait before sending
-  replay: {
-    enabled: true,
-  },
+  writeKey: "omni-public-write-key-here",
+  enabled: false, // Start with tracking disabled
 });
 ```
 
-## Session replay
+## Protect sensitive elements
 
-If enabled (default), Omni Analytics records an rrweb replay of user sessions:
+Use CSS classes to control what gets tracked. Add these to any element you want to protect:
 
-```ts
-initializeSDK({
-  projectId: "<projectId>",
-  endpoint: "https://omnioptimize-vdvv.onrender.com/ingest",
-  replay: {
-    enabled: true, // Record sessions
-  },
-});
+### `om-no-capture`
+
+**Completely exclude an element from tracking.**
+
+Use this when you don't want Omni to track clicks or record this element at all.
+
+```html
+<!-- This button won't be tracked -->
+<button class="om-no-capture">Delete Account</button>
+
+<!-- This entire form will be ignored -->
+<form class="om-no-capture">
+  <input type="email" placeholder="Enter email" />
+  <button>Submit</button>
+</form>
 ```
 
-Replay data allows you to watch user interactions and debug issues.
+### `om-mask`
 
----
+**Hide text content in session recordings.**
 
-> **Status:** Automatic tracking is stable. Event schemas may evolve with new features.
+**Protected by default:**
+
+- **All input fields are masked** — form values, passwords, and sensitive data are automatically hidden in recordings. You don't need to do anything.
+
+```html
+<!-- Text will be masked in recordings -->
+<div class="om-mask">Your email: user@example.com</div>
+
+<p class="om-mask">Billing address: 123 Main St, City, State 12345</p>
+```
+
+### `om-ignore`
+
+**Exclude elements from session recordings.**
+
+Use this to completely hide elements from recordings. They won't appear at all.
+
+```html
+<!-- Won't appear in session replays -->
+<form class="om-ignore">
+  <input type="password" placeholder="Enter password" />
+  <button>Login</button>
+</form>
+
+<div class="om-ignore">
+  <!-- Payment details won't be recorded -->
+  <input type="text" placeholder="Credit card number" />
+</div>
+```
+
+## When to use each class
+
+| Class           | Blocks clicks | Hides in recordings | Use for                                  |
+| --------------- | ------------- | ------------------- | ---------------------------------------- |
+| `om-no-capture` | ✅            | ✅                  | Sensitive actions (delete, cancel, etc.) |
+| `om-mask`       | ❌            | ✅ (text only)      | Personal data (emails, addresses, names) |
+| `om-ignore`     | ❌            | ✅                  | Passwords, payment forms, auth pages     |
+
+## Example: Protect a checkout page
+
+```html
+<div class="checkout-page">
+  <h1>Checkout</h1>
+
+  <!-- Mask personal info in recordings -->
+  <div class="om-mask">
+    <p>Name: John Doe</p>
+    <p>Email: john@example.com</p>
+  </div>
+
+  <!-- Hide payment form completely -->
+  <form class="om-ignore">
+    <input type="text" placeholder="Card number" />
+    <input type="text" placeholder="CVV" />
+    <button>Pay Now</button>
+  </form>
+
+  <!-- Don't track cancel action -->
+  <button class="om-no-capture">Cancel Order</button>
+</div>
+```
+
+<Callout type="warning">
+  **Important:** These classes only work if you add them to your HTML. The SDK
+  cannot retroactively protect data that's already been captured.
+</Callout>
+
+## What is tracked by default
+
+When enabled, the SDK automatically captures:
+
+- **Page views** — every navigation and URL change
+- **Clicks** — what users click and where
+- **Sessions** — anonymous user sessions with replay recordings
+
+Your users' sensitive data is protected automatically. The CSS classes (`om-mask`, `om-ignore`, `om-no-capture`) let you add extra protection when needed.
