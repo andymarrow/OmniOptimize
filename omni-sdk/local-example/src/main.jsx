@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { initializeSDK, disableSDK, enableSDK, destroySDK } from "@omni-analytics/sdk";
+import { initializeSDK, enableSDK, destroySDK } from "@omni-analytics/sdk";
 import { TrackerProvider } from "@omni-analytics/react";
 import App from "./App";
 import "./index.css";
@@ -31,5 +31,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </Routes>
       </BrowserRouter>
     </TrackerProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
