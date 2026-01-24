@@ -1,4 +1,4 @@
-# ml_service/api.py
+# import the frameworks and library
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -26,6 +26,7 @@ try:
 except Exception as e:
     print(f"❌ Error loading model: {e}")
 
+# feature trained in machine
 class SeoData(BaseModel):
     performance_score: float
     accessibility_score: float
